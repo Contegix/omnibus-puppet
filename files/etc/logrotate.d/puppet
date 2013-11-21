@@ -1,0 +1,10 @@
+/opt/contegix/puppet/var/log/puppet/*log {
+  missingok
+  notifempty
+  create 0644 puppet puppet
+  sharedscripts
+  postrotate
+    pkill -USR2 -u puppet -f 'puppet agent' || true
+    pkill -USR2 -u puppet -f 'puppet master' || true
+  endscript
+}

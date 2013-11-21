@@ -1,0 +1,19 @@
+commit 59d5c537fe4ada10c0f1806716656ee6392f651c
+Author: Raphaël Pinson <raphink@gmail.com>
+Date:   Tue Nov 22 22:28:11 2011 +0100
+
+    mdadm.aug: dev_device cannot match dev_partitions_re
+
+diff --git a/lenses/mdadm_conf.aug b/lenses/mdadm_conf.aug
+index 1193c13..2f20158 100644
+--- a/lenses/mdadm_conf.aug
++++ b/lenses/mdadm_conf.aug
+@@ -75,7 +75,7 @@ let dev_partitions_re = /partitions/i
+ 
+ let dev_containers = [ del dev_containers_re "containers" . label "containers" ]
+ let dev_partitions = [ del dev_partitions_re "partitions" . label "partitions" ]
+-let dev_device = [ label "name". store ( value - dev_containers_re) ]
++let dev_device = [ label "name". store ( value - dev_containers_re - dev_partitions_re) ]
+ 
+ (* Strictly there must be at least 1 device, but we err on the side of parsing
+ *)

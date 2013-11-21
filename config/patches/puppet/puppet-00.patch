@@ -1,0 +1,10 @@
+--- bin/puppet	2013-11-20 20:09:03.000000000 -0600
++++ bin/puppet.new	2013-11-20 20:08:22.000000000 -0600
+@@ -19,5 +19,7 @@
+   end
+ end
+ 
++ARGV << "--confdir=/opt/contegix/puppet/etc/puppet"
++
+ gem 'puppet', version
+ load Gem.bin_path('puppet', 'puppet', version)

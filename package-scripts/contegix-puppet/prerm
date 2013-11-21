@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Perform necessary puppet removal steps
+# before package is uninstalled.
+#
+
+
+prefix="contegix-"
+puppet_services="puppet-agent" #puppet-master puppet-server puppet-queue"
+
+# Disable and stop puppet services
+for service in $puppet_services; do
+        service="${prefix}${service}"
+        if [ -h /etc/init.d/${service} ] ; then
+                /etc/init.d/${service} status 2>&1 > /dev/null && /etc/init.d/${service} stop
+                chkconfig ${service} off
+                chkconfig --del ${service}
+                [ -e /etc/init.d/${service} ] && rm -f /etc/init.d/${service}
+        fi
+        # unlink logroate config
+        [ -h /etc/logrotate.d/${service} ] && rm -f /etc/logrotate.d/${service}
+done
+
+exit 0

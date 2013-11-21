@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# Perform necessary puppet setup steps
+# after package is installed.
+#
+
+PROGNAME=$(basename $0)
+
+function error_exit
+{
+  echo "${PROGNAME}: ${1:-"Unknown Error"}" 1>&2
+  exit 1
+}
+
+prefix="contegix-"
+
+# Install package - add services and change permissions
+# On first install, register the init scripts but disable services.
+# User should choose the services they want to run after install
+
+# Install package - add user
+# Create puppet group
+#if ! getent group ${prefix}puppet >/dev/null; then
+#	groupadd -r ${prefix}puppet -g 392
+#fi
+
+# Create puppet user
+#if ! getent passwd ${prefix}puppet >/dev/null; then
+#	useradd -r -u 392 -g ${prefix}puppet -d /opt/contegix/puppet \
+#    		-s /bin/bash -c "Puppet Configuration Management" ${prefix}puppet
+#fi
+
+# link services into legacy init system
+puppet_services="puppet-agent " #puppet-master puppet-queue"
+
+for service in $puppet_services; do
+	if [ ! -e /etc/init.d/${prefix}$service ] ; then 
+		ln -s /opt/contegix/puppet/etc/init.d/$service /etc/init.d/${prefix}${service}
+		chkconfig --add ${prefix}$service
+		chkconfig ${prefix}$service off
+	fi
+done
+
+# link logrotate configuration
+[ -h /etc/logrotate.d/${prefix}puppet ] || ln -s /opt/contegix/puppet/etc/logrotate.d/puppet /etc/logrotate.d/${prefix}${service}
+
+exit 0

@@ -1,0 +1,42 @@
+From 1d6a93b3e519eb27e98e5ba56474ae0e934bbbf7 Mon Sep 17 00:00:00 2001
+From: Francis Giraldeau <francis.giraldeau@gmail.com>
+Date: Fri, 19 Aug 2011 20:26:10 -0400
+Subject: [PATCH 2/3] Fix run single command with autosave
+
+This patch fixes autosave in the case only one command is provided as
+arguments and adds a test that checks proper handling of this case.
+---
+ src/augtool.c           |    2 +-
+ tests/test-save-mode.sh |    6 ++++++
+ 2 files changed, 7 insertions(+), 1 deletions(-)
+
+diff --git a/src/augtool.c b/src/augtool.c
+index 8981b4f..621f644 100644
+--- a/src/augtool.c
++++ b/src/augtool.c
+@@ -483,7 +483,7 @@ static int run_args(int argc, char **argv) {
+     }
+     code = run_command(line);
+     free(line);
+-    if (code == 0 && auto_save)
++    if (code >= 0 && auto_save)
+         code = run_command("save");
+     return (code == 0 || code == -2) ? 0 : -1;
+ }
+diff --git a/tests/test-save-mode.sh b/tests/test-save-mode.sh
+index d34f5bc..f8a0c3b 100755
+--- a/tests/test-save-mode.sh
++++ b/tests/test-save-mode.sh
+@@ -120,3 +120,9 @@ EOF
+ assert_ipaddr 127.0.0.2
+ assert_file_exists_not $hosts.augnew
+ assert_file_exists_not $hosts.augsave
++
++setup "autosave command line"
++run_augtool ok set /files/etc/hosts/1/ipaddr 127.0.0.2
++assert_ipaddr 127.0.0.2
++assert_file_exists_not $hosts.augnew
++assert_file_exists_not $hosts.augsave
+-- 
+1.7.7.6
+
