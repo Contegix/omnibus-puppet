@@ -5,9 +5,4 @@
 #
 
 
-# Delete puppet files
-if [ -d "/opt/contegix/puppet" ]; then
-	rm -rf /opt/contegix/puppet
-fi
-
 exit 0

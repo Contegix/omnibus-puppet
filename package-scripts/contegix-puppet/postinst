@@ -13,24 +13,6 @@ function error_exit
 }
 
 prefix="contegix-"
-
-# Install package - add services and change permissions
-# On first install, register the init scripts but disable services.
-# User should choose the services they want to run after install
-
-# Install package - add user
-# Create puppet group
-#if ! getent group ${prefix}puppet >/dev/null; then
-#	groupadd -r ${prefix}puppet -g 392
-#fi
-
-# Create puppet user
-#if ! getent passwd ${prefix}puppet >/dev/null; then
-#	useradd -r -u 392 -g ${prefix}puppet -d /opt/contegix/puppet \
-#    		-s /bin/bash -c "Puppet Configuration Management" ${prefix}puppet
-#fi
-
-# link services into legacy init system
 puppet_services="puppet-agent " #puppet-master puppet-queue"
 
 for service in $puppet_services; do
