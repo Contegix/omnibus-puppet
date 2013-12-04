@@ -23,8 +23,10 @@ if [ "${1}" -eq "0" ] ; then
 			chkconfig --del ${service}
 			[ -e /etc/init.d/${service} ] && rm -f /etc/init.d/${service}
 		fi
-		# unlink logroate config
-		[ -h /etc/logrotate.d/${service} ] && rm -f /etc/logrotate.d/${service}
 	done
+        # unlink logroate config
+        [ -h /etc/logrotate.d/${prefix}puppet-agent ] && rm -f /etc/logrotate.d/${prefix}puppet-agent
+        # unlink cron config
+        [ -h /etc/cron.hourly/${prefix}puppet-agent ] && rm -f /etc/cron.hourly/${prefix}puppet-agent
 fi
 exit 0

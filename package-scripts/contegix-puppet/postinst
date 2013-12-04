@@ -24,6 +24,8 @@ for service in $puppet_services; do
 done
 
 # link logrotate configuration
-[ -h /etc/logrotate.d/${prefix}puppet ] || ln -s /opt/contegix/puppet/etc/logrotate.d/puppet /etc/logrotate.d/${prefix}${service}
+[ -h /etc/logrotate.d/${prefix}puppet ] || ln -s /opt/contegix/puppet/etc/logrotate.d/puppet /etc/logrotate.d/${prefix}puppet
+# link hourly puppet agent cron
+[ -h /etc/cron.hourly/${prefix}puppet-agent ] || ln -s /opt/contegix/puppet/etc/cron.hourly/puppet-agent /etc/cron.hourly/${prefix}puppet-agent
 
 exit 0
