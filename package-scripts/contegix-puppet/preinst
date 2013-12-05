@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# Perform necessary puppet setup steps
+# after package is installed.
+#
+
+PROGNAME=$(basename $0)
+
+function error_exit
+{
+  echo "${PROGNAME}: ${1:-"Unknown Error"}" 1>&2
+  exit 1
+}
+
+prefix="contegix-"
+puppet_services="puppet-agent " #puppet-master puppet-queue"
+install_base="/opt/contegix/puppet"
+
+#
+# since omnibus doesn't currently support passing --config-files to fpm,
+# we have to handle config files ourselves 
+config_files=""
+config_files="${config_files} ${install_base}/etc/puppet/puppet.conf"
+config_files="${config_files} ${install_base}/etc/sysconfig/puppet"
+config_files="${config_files} ${install_base}/etc/sysconfig/puppetmaster"
+
+for config_file in ${config_files} ; do 
+  if [ -s "${config_file}" ]  ; then
+    cp -af "${config_file}" "${config_file}.save"
+  fi
+done
+
+exit 0

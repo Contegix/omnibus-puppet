@@ -14,6 +14,7 @@ function error_exit
 
 prefix="contegix-"
 puppet_services="puppet-agent " #puppet-master puppet-queue"
+install_base="/opt/contegix/puppet"
 
 for service in $puppet_services; do
 	if [ ! -e /etc/init.d/${prefix}$service ] ; then 
@@ -27,5 +28,20 @@ done
 [ -h /etc/logrotate.d/${prefix}puppet ] || ln -s /opt/contegix/puppet/etc/logrotate.d/puppet /etc/logrotate.d/${prefix}puppet
 # link hourly puppet agent cron
 [ -h /etc/cron.hourly/${prefix}puppet-agent ] || ln -s /opt/contegix/puppet/etc/cron.hourly/puppet-agent /etc/cron.hourly/${prefix}puppet-agent
+
+
+#
+# since omnibus doesn't currently support passing --config-files to fpm,
+# we have to handle config files ourselves 
+config_files=""
+config_files="${config_files} ${install_base}/etc/puppet/puppet.conf"
+config_files="${config_files} ${install_base}/etc/sysconfig/puppet"
+config_files="${config_files} ${install_base}/etc/sysconfig/puppetmaster"
+
+for config_file in ${config_files} ; do
+  if [ -s "${config_file}.save" ]  ; then
+    mv -f "${config_file}.save" "${config_file}"
+  fi
+done
 
 exit 0
