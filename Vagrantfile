@@ -9,11 +9,35 @@ end
 
 host_project_path = File.expand_path("..", __FILE__)
 guest_project_path = "/home/vagrant/#{File.basename(host_project_path)}"
-project_name = "puppet"
+project_name = "contegix-puppet"
 
 Vagrant.configure("2") do |config|
 
   config.vm.hostname = "#{project_name}-omnibus-build-lab"
+
+  config.vm.define 'centos-5' do |c|
+    c.berkshelf.berksfile_path = "./Berksfile"
+    c.vm.box = "opscode-centos-5.8"
+    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-5.9_chef-11.4.4.box"
+  end
+
+  config.vm.define 'centos-5_32' do |c|
+    c.berkshelf.berksfile_path = "./Berksfile"
+    c.vm.box = "opscode-centos-5.8_32"
+    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-5.9-i386_chef-11.4.4.box"
+  end
+
+  config.vm.define 'centos-6' do |c|
+    c.berkshelf.berksfile_path = "./Berksfile"
+    c.vm.box = "opscode-centos-6.4"
+    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.4_chef-11.4.4.box"
+  end
+
+  config.vm.define 'centos-6_32' do |c|
+    c.berkshelf.berksfile_path = "./Berksfile"
+    c.vm.box = "opscode-centos-6.4_32"
+    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.4-i386_chef-11.4.4.box"
+  end
 
   config.vm.define 'ubuntu-10.04' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
@@ -33,23 +57,11 @@ Vagrant.configure("2") do |config|
     c.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/precise/current/precise-server-cloudimg-amd64-vagrant-disk1.box"
   end
 
-  config.vm.define 'centos-5' do |c|
-    c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "opscode-centos-5.8"
-    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-5.8_chef-11.2.0.box"
-  end
-
-  config.vm.define 'centos-6' do |c|
-    c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "opscode-centos-6.3"
-    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.3_chef-11.2.0.box"
-  end
-
   config.vm.provider :virtualbox do |vb|
     # Give enough horsepower to build without taking all day.
     vb.customize [
       "modifyvm", :id,
-      "--memory", "1536",
+      "--memory", "2048",
       "--cpus", "2"
     ]
   end
@@ -62,8 +74,8 @@ Vagrant.configure("2") do |config|
   # The path to the Berksfile to use with Vagrant Berkshelf
   config.berkshelf.berksfile_path = "./Berksfile"
 
-  config.ssh.max_tries = 40
-  config.ssh.timeout   = 120
+#  config.ssh.max_tries = 40
+#  config.ssh.timeout   = 120
   config.ssh.forward_agent = true
 
   host_project_path = File.expand_path("..", __FILE__)
@@ -77,7 +89,7 @@ Vagrant.configure("2") do |config|
       "omnibus" => {
         "build_user" => "vagrant",
         "build_dir" => guest_project_path,
-        "install_dir" => "/opt/#{project_name}"
+        "install_dir" => "/opt/contegix/puppet"
       }
     }
 
