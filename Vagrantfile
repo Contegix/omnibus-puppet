@@ -64,6 +64,14 @@ Vagrant.configure("2") do |config|
       "--memory", "2048",
       "--cpus", "2"
     ]
+    vb.customize [
+      "modifyvm", :id,
+      "--natdnshostresolver1", "on"
+    ]
+    vb.customize [
+      "modifyvm", :id,
+      "--natdnsproxy1", "on"
+    ]
   end
 
   # Ensure a recent version of the Chef Omnibus packages are installed
