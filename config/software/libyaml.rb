@@ -16,12 +16,12 @@
 #
 
 name "libyaml"
-version "0.1.4"
+version "0.1.6"
 
-source :url => "http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz",
-       :md5 => "36c852831d02cf90508c29852361d01b"
+source :url => "http://pyyaml.org/download/libyaml/yaml-#{version}.tar.gz",
+       :md5 => '5fe00cda18ca5daeb43762b80c38e06e'
 
-relative_path "yaml-0.1.4"
+relative_path "yaml-#{version}"
 
 configure_env =
   case platform
