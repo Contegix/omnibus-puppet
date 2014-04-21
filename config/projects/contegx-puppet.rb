@@ -6,8 +6,8 @@ homepage "http://www.contegix.com"
 replaces        "contegix-puppet"
 install_path    "/opt/contegix/puppet"
 #build_version   Omnibus::BuildVersion.new.semver
-build_version   "3.3.2"
-build_iteration 15
+build_version   "3.4.3"
+build_iteration 1
 
 # creates required build directories
 dependency "preparation"
