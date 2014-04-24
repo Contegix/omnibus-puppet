@@ -8,13 +8,20 @@ service="${prefix}puppet-agent"
 /etc/init.d/${service} status > /dev/null 2>&1 && exit 1
 
 # delete the disabled lock file if its really old
-/usr/bin/find ${install_base}/var/lib/puppet/state/agent_disabled.lock -type f -mmin +300 -delete
+/usr/bin/find ${install_base}/var/lib/puppet/state/agent_disabled.lock -type f -mmin +300 -delete > /dev/null 2>&1
 
 # delete the catalog run lock file  if its really old
-/usr/bin/find ${install_base}/var/lib/puppet/state/agent_catalog_run.lock -type f -mmin +90 -delete
+/usr/bin/find ${install_base}/var/lib/puppet/state/agent_catalog_run.lock -type f -mmin +90 -delete > /dev/null 2>&1
 
 # exit if a catalog run is taking place
-[ -e "${install_base}/var/lib/puppet/state/agent_catalog_run.lock" ] && exit 1 
+[ -e "${install_base}/var/lib/puppet/state/agent_catalog_run.lock" ] && exit 1
 
-# otherwise run
-${install_base}/bin/puppet agent --onetime --no-daemonize --no-usecacheonfailure --detailed-exitcodes
+# otherwise sleep for a random time within 10 minutes
+rand="${RANDOM}"
+[ -n "${rand}" ] || rand=0
+offset=$(( $rand % 600 ))
+sleep ${offset}
+
+# puppet agent run
+/opt/contegix/puppet/bin/kill-old-puppet
+/opt/contegix/puppet/bin/puppet-run --cron > /dev/null 2>&1
