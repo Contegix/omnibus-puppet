@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+#
+# This script takes a stream of PIDs as stdin and alerts if any are too old.
+# The source of the PIDs is left undefined for maximum flexibility.
+#
+
+usage() {
+  cat << SHOW_USAGE
+USAGE:   $0 [-l label] [-q]  -c crit_secs
+
+EXAMPLE: NRPE check to alert when apache processes are older than 1 day
+
+  /usr/bin/pgrep -U apache | $0 -l apache -c 86400
+
+EXAMPLE: Find and kill old apache processes
+
+  /usr/bin/pgrep -U apache | $0 -q -c 86400 | sudo xargs -r kill
+
+EXAMPLE: Find and display old apache processes
+
+  /bin/ps -e -p \$( /usr/bin/pgrep -U apache | $0 -q -c 86400 )
+
+NOTE:    crit_secs option is required.  Label visible in the Nagios UI.
+
+NOTE:    -q flag means only print the pids, no text.
+SHOW_USAGE
+}
+
+unknown=3
+critical=2
+warning=1
+ok=0
+
+typeset -i crit_secs
+typeset -i input_pid
+typeset -i pid_start
+typeset -i time_now
+typeset -i pid_age
+
+while getopts qhl:w:c: option ; do
+  case "${option}" in
+    l)
+      label="${OPTARG}"
+      ;;
+    w)
+      ;;
+    c)
+      crit_secs="${OPTARG}"
+      ;;
+    h)
+      usage
+      exit "${unknown}"
+      ;;
+    q)
+      quiet=1
+      ;;
+  esac
+done
+
+if [[ -z "$crit_secs" ]] ; then
+  usage
+  exit "${unknown}"
+fi
+
+time_now=$( /bin/date +%s )
+
+while read input_pid ; do
+    pid_start=$( /bin/date --date="$(/bin/ps --no-headers -o lstart -p ${input_pid})" +'%s' )
+    pid_age=$(( ${time_now} - ${pid_start} ))
+    if (( ${pid_age} >= ${crit_secs} )) ; then
+  if [ -z "${crit_pids}" ] ; then
+      crit_pids="${input_pid}"
+  else
+      crit_pids="${crit_pids} ${input_pid}"
+  fi
+    fi
+done
+
+if [[ -n "${quiet}" ]] ; then
+  # if quiet, just print pids (if any) and exit ok
+        echo "${crit_pids}"
+        exit "${ok}"
+elif [[ -n "${crit_pids}" ]] ; then
+  echo "CRITICAL ${label} PIDs older than ${crit_secs} seconds:${crit_pids}"
+  exit "${critical}"
+else
+  echo "OK no ${label} PIDs older than ${crit_secs} seconds"
+  exit "${ok}"
+fi

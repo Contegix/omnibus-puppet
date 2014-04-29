@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+source /opt/contegix/puppet/bin/puppet-functions
+FACTERLIB=/opt/contegix/puppet/var/lib/puppet/lib/facter
+/opt/contegix/puppet/bin/facter -p 

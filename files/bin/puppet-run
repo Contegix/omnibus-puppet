@@ -1,0 +1,232 @@
+#!/bin/bash
+# Do a single puppet run, suitable for running interactively. Does a noop run
+# to let you see what will change before actually committing.
+# Created: 2008 Sep 22 zach@box.net
+# Modified: 2011 May 4 josh@box.net
+#           2012 May 31 luc@box.net : added pod.box.net and change shebang from sh to bash
+
+FILTEROUTPUT=false
+LOCKFILE=/opt/contegix/puppet/var/run/puppet.lock
+LOCKTIME=7200
+PUPPET="/opt/contegix/puppet/bin/puppet agent --confdir=/opt/contegix/puppet/etc/puppet --no-usecacheonfailure --test"
+PUPPETMASTERPORT=8140
+RUNPUPPET=maybe
+SERVER=""
+TAGS=""
+TAGLIST=""
+ENV=
+CRON=false
+DEBUG=0
+NICE=
+IONICE=
+
+source /opt/contegix/puppet/bin/puppet-functions
+
+##
+# After parsing command line args, assert if this is a local run, that
+# the local user specified the --environment flag
+##
+
+function setPuppetArgsForEnv() {
+  # ENV gets set when iterating over arguments
+  if [[ -z "$ENV" ]]; then
+    if [[ "$(whoami)" != 'root' ]]; then
+      echo >&2 'The --environment flag must be provided when not running as root'
+      exit 1
+    fi
+  else
+    PUPPETARGS="$PUPPETARGS --environment=$ENV"
+  fi
+}
+
+function showHelp() {
+  cat << EOF
+Usage: $0 <options>
+
+Performs a single puppet run. With no options shows changes to be applies and
+prompts for confirmation.
+
+  --runpuppet=maybe (default)
+    Displays any pending changes and prompts to apply changes.
+  --runpuppet=false | -n
+    Only display changes that need to be applied.
+  --runpuppet=true | -y
+    Apply changes without prompting.
+  --cron
+    Apply changes and output in a form suitable for emailing.
+  --filter-output
+    Filter the puppetd output so only changes are shown
+  --help
+    This message.
+  --tags=<list>
+    A list of tags to pass to puppet.
+  --release
+    Release the lockfile (held by you or someone else.)
+  -m'<message>'
+    Send a pmail describing this update.
+  --server=<server>
+    Specify the puppemaster server to use
+  --environment=<environment>
+    Specify the puppet environment (git branch name) to use
+EOF
+}
+
+##
+# This function actually calls puppet. The arguments are extra arguments to
+# pass to the puppetd invocation
+##
+run_puppet() {
+  local extra_args="$*"
+  filter_cmd=
+  if [ "$FILTEROUTPUT" = "true" ]; then
+    filter_cmd=" | grep -v ^info: |\
+                                grep -v 'Ignoring cache' |\
+                                grep -v 'catalog run' |\
+                                grep -v 'Ignoring ..listen on onetime run' |\
+                                grep -v 'checksum: checksum changed' |\
+                                grep -v 'vif[0-9]*:' |\
+                                grep -v 'warning: XMLRPC returned wrong size' |\
+                                grep -v 'notice: Run of Puppet configuration client already in progress'"
+  fi
+  full_cmd="$PUPPETCMD $extra_args $filter_cmd"
+  if [ "$DEBUG" = "1" ]; then
+    echo "Puppet command: $full_cmd"
+  fi
+  eval $full_cmd
+}
+
+# Set up the environment
+export PUPPETARGS SERVER
+pathmunge /opt/contegix/puppet/bin
+pathmunge /usr/local/sbin
+pathmunge /usr/sbin
+pathmunge /sbin
+
+for arg in $*; do
+  if [ "$MESSAGEARG" = "true" ]; then
+    MESSAGE="-m${arg}"
+    MESSAGEARG=false
+    continue
+  fi
+  case $arg in
+    --cron)
+      #sleep $(expr $RANDOM % 1200) # To stagger clients
+      RUNPUPPET=true
+      FILTEROUTPUT=true
+      CRON=true
+      NICE=19
+      IONICE=7
+      ;;
+    --filter-output)
+      FILTEROUTPUT=true
+      ;;
+    --help)
+      showHelp
+      exit 0
+      ;;
+    --release)
+      release_puppet_lock
+      exit $?
+      ;;
+    --runpuppet=*)
+      RUNPUPPET=$(echo $arg | cut -f 2 -d =)
+      ;;
+    --server=*)
+      SERVER=$(echo $arg | cut -f 2 -d =)
+      ;;
+    --tags=*)
+      TAGS=$(echo $arg | cut -f 2 -d =)
+      ;;
+    --environment=*|--env=*)
+      ENV=$(echo $arg | cut -d= -f2 | sed -e 's:[^a-z0-9A-Z_]:_:g')
+      ;;
+    -m*)
+      if [ "$arg" = "-m" ]; then
+        MESSAGEARG=true
+      else
+        MESSAGE=$arg
+      fi
+      ;;
+    -n)
+      RUNPUPPET=false
+      ;;
+    -y)
+      RUNPUPPET=true
+      ;;
+    --debug)
+      DEBUG=1
+      ;;
+    --nice=*)
+      NICE=$(echo $arg | cut -f 2 -d =)
+      ;;
+    --ionice=*)
+      IONICE=$(echo $arg | cut -f 2 -d =)
+      ;;
+    *)
+      echo "*** Unknown flag: $arg"
+      showHelp
+      exit 1
+      ;;
+  esac
+done
+if [ -n "$TAGS" ]; then
+  TAGS="--tags $TAGS"
+fi
+
+setPuppetArgsForEnv
+
+if [ -n "$SERVER" ]; then
+  PUPPETARGS="$PUPPETARGS --server=$SERVER"
+fi
+if [ "$CRON" != "true" ]; then
+  # Disable reporting if this isn't a cron run
+  PUPPETARGS="$PUPPETARGS --no-report"
+  LOCKTIME=1200
+fi
+PUPPETCMD="$SUDO $PUPPET $PUPPETARGS $TAGS"
+if [ -n "$IONICE" ]; then
+  PUPPETCMD="ionice -c 2 -n $IONICE $PUPPETCMD"
+fi
+if [ -n "$NICE" ]; then
+  PUPPETCMD="nice -n $NICE $PUPPETCMD"
+fi
+
+if [ -e "/opt/contegix/puppet/bin/puppet-reset-master" ]; then
+  /opt/contegix/puppet/bin/puppet-reset-master;
+fi
+
+check_puppet_lock
+create_puppet_lock $LOCKTIME
+
+# Determine how to run
+case $RUNPUPPET in
+  false|no)
+    echo "*** Checking puppet configuration."
+    run_puppet --noop
+    ;;
+  true|yes)
+    logger -p daemon.info -t runpuppet -- $0 invoked by $USERNAME, doing full puppet run against port $PUPPETMASTERPORT
+    run_puppet
+    if [ -n "$MESSAGE" ]; then
+      pmail $MESSAGE
+    fi
+    clog_it
+    ;;
+  maybe)
+    echo "*** Checking puppet configuration."
+    run_puppet --noop
+    echo -en "\n\n*** Do you wish to apply this configuration to $HOSTNAME? [y/N] "
+    read ANSWER
+
+    # A roundabout way to make sure the answer starts with Y. We
+    # could probably employ a better check here.
+    if echo $ANSWER | grep -qi '^y'; then
+      logger -p daemon.info -t runpuppet -- $0 invoked by $USERNAME, doing full puppet run against port $PUPPETMASTERPORT
+      run_puppet
+      clog_it
+    fi
+    ;;
+esac
+
+remove_puppet_lock
+exit $?

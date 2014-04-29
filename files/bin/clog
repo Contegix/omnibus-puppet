@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Author: Dave Eddy <deddy@box.com>
+# Date: 3/6/12
+# Used with Permission, JKC 10/2013
+
+CHANGE_METHOD="CLOG_CLI"
+
+help() {
+  echo "You clogged the tubes"
+        echo "ex. clog -t http://jira.inside-box.net/browse/OPS-5228 -m 'restarting memcached on edison'"
+        echo "-t JIRA Ticket URL"
+        echo "-m Message about change REQUIRED"
+        exit 1
+}
+
+
+
+while [ $# -gt 0 ] ; do
+        case "$1" in
+  -t)
+    if [[ -z $2 ]]; then
+                        echo "ERROR Ticket number required with -t option"
+                        help
+                fi
+    TICKET=$2
+    shift 2
+    ;;
+  -m)
+    if [[ -z $2 ]]; then
+      echo "ERROR Message required"
+      help
+    fi
+    MESSAGE=$2
+    shift 2
+    ;;
+  *)
+    help
+    ;;
+
+  esac
+done
+
+if [[ -z $MESSAGE ]] ; then
+  echo "ERROR Message required"
+  help
+fi
+
+logger CHANGE_LOG change_method:$CHANGE_METHOD host:`hostname` user:`id -un` ticket:$TICKET message:$MESSAGE
+echo "CHANGE LOGGED"

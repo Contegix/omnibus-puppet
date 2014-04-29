@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Kill puppet processes older than 2 hours
+
+typeset -i return
+typeset -a puppet_pids
+
+tty > /dev/null 2>&1
+if (( $? == 0 )) ; then
+  has_tty=true
+fi
+
+log_syslog() {
+  logger -t "kill-old-puppet[$$]" -p user.info "$@"
+  if [[ "${has_tty}" ]] ; then
+    echo "$@"
+  fi
+}
+
+find_puppet_pids() {
+  pgrep puppetd | /opt/contegix/puppet/bin/check_pid_age -q -c 7200
+}
+
+kill_puppet_loop() {
+  kill_signal=$1
+  puppet_pids=( $( find_puppet_pids ) )
+
+  if (( ${#puppet_pids[@]} > 0 )) ; then
+    cmd="kill $kill_signal ${puppet_pids[@]}"
+    $cmd
+    log_syslog "$cmd"
+    return=1
+  else
+    return=0
+  fi
+  return $return
+}
+
+kill_puppet_loop -TERM
+if (( $? == 1 )) ; then
+  sleep 30
+  kill_puppet_loop -KILL
+fi

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+REMOTE_HOST=puppet.cloud.contegix.com
+USER=`whoami`
+
+git_dir() {
+	git rev-parse --git-dir
+}
+
+git_branch_name() {
+	git rev-parse --abbrev-ref HEAD
+}
+
+# This function shamelessly stolen from http://stackoverflow.com/a/3879077
+require_clean_work_tree () {
+	# Update the index
+	git update-index -q --ignore-submodules --refresh
+	err=0
+
+	# Disallow unstaged changes in the working tree
+	if ! git diff-files --quiet --ignore-submodules --
+	then
+		echo "Your repo contains unstaged changes."
+		git diff-files --name-status -r --ignore-submodules -- >&2
+		err=1
+	fi
+
+	# Disallow uncommitted changes in the index
+	if ! git diff-index --cached --quiet HEAD --ignore-submodules --
+	then
+		echo "Your repo's index contains uncommitted changes."
+		git diff-index --cached --name-status -r --ignore-submodules HEAD -- >&2
+		err=1
+	fi
+
+	if [ $err = 1 ]
+	then
+		echo "Please commit or stash any changes and re-run this script."
+		return 1
+	fi
+}
+
+main() {
+	# Make sure we're in a git repo that looks like the puppet repo
+	git_dir=$(git_dir)
+	if [ ! -e "$git_dir" ]; then
+		echo "You need to be in your puppet git repo when running this command."
+		exit 1
+	fi
+	if [ ! -e "${git_dir}/../modules" ]; then
+		echo "This doesn't look like the puppet git repo."
+		exit 1
+	fi
+
+	# Make sure we're not in the master branch
+	branch_name=$(git_branch_name)
+	if [ "$branch_name" = "master" ]; then
+		echo "This cannot be used in the master branch. Please switch to or create a branch for these changes and re-run this script."
+		exit 1
+	fi
+
+	# Check that the branch name only contains allowed characters
+	if ! echo "$branch_name" | grep -q '^[a-zA-Z0-9]\+-[0-9]\+[a-zA-Z0-9\_\-]*$'; then
+		echo "The git branch must be named after a JIRA ticket (OPS-12345, for example)."
+		exit 1
+	fi
+
+	# Make sure the working tree is clean
+	require_clean_work_tree || exit 1
+
+	# Rebase our work against master
+	git fetch origin
+	git rebase origin/master || {
+		echo >&2 'Rebase failed, please address the merge conflict and re-run'
+		# Attempt to abort the rebase if possible so user not left in a bad state
+		git rebase --abort
+		exit 1
+	}
+
+	# Everything looks good, so let's push
+	git push -f origin ${branch_name}
+}
+
+main

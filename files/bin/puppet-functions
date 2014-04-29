@@ -1,0 +1,150 @@
+LOCKFILE=/opt/contegix/puppet/var/run/puppet.lock
+PUPPET_REPO_BASE=/opt/contegix/puppet/etc/puppet
+ENV_BASE_PATH=/opt/contegix/puppet/etc/puppet/environments
+
+
+###################################################################
+
+case ${USERNAME:-${USER:-root}} in
+  root)
+    SUDO=
+    PUPPETARGS="--color=false"
+    ;;
+  *)
+    SUDO=sudo
+    PUPPETARGS="--color=true"
+    ;;
+esac
+
+if [ -n "$SUDO_USER" ]; then
+  USERNAME=$SUDO_USER
+else
+  USERNAME=$(id -un)
+fi
+
+pathmunge () {
+  if ! echo $PATH | egrep -q "(^|:)$1($|:)" ; then
+    if [ "$2" = "after" ] ; then
+      PATH=$PATH:$1
+    else
+      PATH=$1:$PATH
+    fi
+  fi
+}
+
+is_puppet_repo()
+{
+  # Make sure we're in a git repo that looks like the puppet repo
+  git_dir=$1
+  if [ ! -e "$git_dir" ]; then
+    echo "You need to be in your puppet git repo when running this command."
+    return 1
+  fi
+  if [ ! -e "${git_dir}/../modules" ]; then
+    echo "This doesn't look like the puppet git repo."
+    return 1
+  fi
+}
+
+clog_it() {
+  if [ $CRON == "false" ]; then
+    CLOG_MSG="Contegix Puppet was run manually by ${USERNAME}"
+    if [ -n "$TAGS" ]; then
+      CLOG_MSG="${CLOG_MSG} with tags $(echo "$TAGS" | sed -e 's:--tags ::')"
+    fi
+    /opt/contegix/puppet/bin/clog -m "$CLOG_MSG"
+  fi
+}
+
+is_master_branch()
+{
+  branch_name=$1
+  # Make sure we're not in the master branch
+  if [ "$branch_name" = "master" ]; then
+    echo "This cannot be used in the master branch. Please switch to or create a branch for these changes and re-run this script."
+    return 1
+  fi
+}
+
+is_valid_branch()
+{
+  # Check that the branch name only contains allowed characters
+  branch_name=$1;
+  if ! echo "$branch_name" | grep -q '^[a-zA-Z0-9]\+-[0-9]\+[a-zA-Z0-9\_\-]*$'; then
+    echo "The git branch ($branch_name) must be named after a JIRA ticket (OPS-12345, for example)."
+    return 1
+  fi
+}
+
+release_puppet_lock()
+{
+  LOCKCONTENTS=$(< $LOCKFILE)
+  TIMESTAMP=$(echo $LOCKCONTENTS | cut -f 1 -d \ )
+  LOCKUSER=$(echo $LOCKCONTENTS | cut -f 2 -d \ )
+  TIMESTAMP_DIFF=$(expr $(date +%s) - $TIMESTAMP)
+  if [ $USERNAME != $LOCKUSER ]; then
+    echo -n "*** Lock owned by $LOCKUSER. Are you sure you want to release it? [Y/N] "
+    read ANSWER
+    case $ANSWER in
+      Y*|y*)
+        ;;
+      *)
+        exit 13
+        ;;
+    esac
+  fi
+  echo "*** Removing lock file from ${LOCKUSER}: ${LOCKFILE}"
+  $SUDO rm -f $LOCKFILE
+  exit 0
+}
+
+remove_puppet_lock()
+{
+  LOCKCONTENTS=$(< $LOCKFILE)
+  TIMESTAMP=$(echo $LOCKCONTENTS | cut -f 1 -d \ )
+  LOCKUSER=$(echo $LOCKCONTENTS | cut -f 2 -d \ )
+  TIMESTAMP_DIFF=$(expr $(date +%s) - $TIMESTAMP)
+  echo "*** Removing lock file from ${LOCKUSER}: ${LOCKFILE}"
+  # Remove the lock file
+  $SUDO rm -f $LOCKFILE
+  return $?
+}
+
+check_puppet_lock()
+{
+  # Check the lockfile
+  if [ -e $LOCKFILE ]; then
+    LOCKCONTENTS=$(< $LOCKFILE)
+    TIMESTAMP=$(echo $LOCKCONTENTS | cut -f 1 -d \ )
+    LOCKUSER=$(echo $LOCKCONTENTS | cut -f 2 -d \ )
+    TIME_REMAIN=$(expr $TIMESTAMP - $(date +%s))
+    if [ $TIME_REMAIN -gt 0 ]; then
+      echo "*** Puppet lock held by ${LOCKUSER}!"
+      echo "*** Lock release in ${TIME_REMAIN} seconds."
+      exit 11
+    else
+      echo "*** Removing expired lock from ${LOCKUSER}"
+      $SUDO rm -f $LOCKFILE
+    fi
+  fi
+}
+
+create_puppet_lock()
+{
+  if [[ -z "$1" ]]; then
+    LOCKTIME=1200
+  else
+    LOCKTIME=$1
+  fi  
+
+  LOCK="$(date -d "+${LOCKTIME} seconds" +%s) $USERNAME"
+  $SUDO rm -f $LOCKFILE
+  echo $LOCK > $LOCKFILE
+  chmod 666 $LOCKFILE
+  if [ "$LOCK" != "$(< $LOCKFILE)" ]; then
+    echo '*** Could not create lockfile! Exiting...'
+    return 12
+  fi
+  echo "*** Created ${LOCKTIME} second lock for ${USERNAME}"
+  return 0
+}
