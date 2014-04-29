@@ -30,8 +30,6 @@ build do
   command "rm -rf #{install_dir}/embedded/ssl/man"
   command "rm -rf #{install_dir}/embedded/info"
 
-  # patch puppet to always use the proper confdir
-  command "patch -d #{install_dir} -p0 -i #{Omnibus.project_root}/config/patches/puppet/puppet-00.patch"
   # load default configuration files
   command "rsync -a #{Omnibus.project_root}/files/ #{install_dir}/"
 
