@@ -15,6 +15,7 @@ dependency "preparation"
 # puppet dependencies/components
 dependency "ruby"
 dependency "puppet"
+dependency "ubersmithrb"
 
 config_file "#{install_path}/etc/puppet/puppet.conf"
 config_file "#{install_path}/etc/sysconfig/puppet"
