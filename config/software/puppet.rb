@@ -1,5 +1,5 @@
 name "puppet"
-version "3.4.3"
+version "3.6.2"
 
 dependency "ruby"
 dependency "rubygems"
@@ -19,7 +19,7 @@ build do
   gem "install gpgme --no-rdoc --no-ri" , :env => env
 
   # install core project utilities
-  gem "install facter -n #{install_dir}/bin --no-rdoc --no-ri -v 1.7.5" , :env => env
+  gem "install facter -n #{install_dir}/bin --no-rdoc --no-ri -v 2.2.0" , :env => env
   gem "install puppet -n #{install_dir}/bin --no-rdoc --no-ri -v #{version}" , :env => env
 
   # remove documentation
