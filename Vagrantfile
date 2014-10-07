@@ -15,40 +15,52 @@ Vagrant.configure("2") do |config|
 
   config.vm.hostname = "#{project_name}.build.contegix.com"
 
-  config.vm.define 'centos-5' do |c|
+  config.vm.define 'centos-5.10_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "opscode-centos-5.8"
-    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-5.9_chef-11.4.4.box"
+    c.vm.box = "chef-centos-5.10_64"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-5.10/versions/1/providers/virtualbox.box" 
   end
 
-  config.vm.define 'centos-5_32' do |c|
+  config.vm.define 'centos-5.10_32' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "opscode-centos-5.8_32"
-    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-5.9-i386_chef-11.4.4.box"
+    c.vm.box = "chef-centos-5.10_32"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-5.10-i386/versions/1/providers/virtualbox.box" 
   end
 
-  config.vm.define 'centos-6' do |c|
+  config.vm.define 'centos-6.5_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "opscode-centos-6.4"
-    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.4_chef-11.4.4.box"
+    c.vm.box = "chef-centos-6.5_64"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-6.5/versions/1/providers/virtualbox.box" 
   end
 
-  config.vm.define 'centos-6_32' do |c|
+  config.vm.define 'centos-6.5_32' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "opscode-centos-6.4_32"
-    c.vm.box_url = "http://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.4-i386_chef-11.4.4.box"
+    c.vm.box = "chef-centos-6.5_32"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-6.5-i386/versions/1/providers/virtualbox.box" 
   end
 
-  config.vm.define 'ubuntu-12.04_64' do |c|
+  config.vm.define 'centos-7.0_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "canonical-ubuntu-12.04"
-    c.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/precise/current/precise-server-cloudimg-amd64-vagrant-disk1.box"
+    c.vm.box = "chef-centos-7.0_64"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-7.0/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'ubuntu-14.04_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "canonical-ubuntu-12.04"
-    c.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+    c.vm.box = "chef-ubuntu-14.04_64"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/ubuntu-14.04/versions/1/providers/virtualbox.box" 
+  end
+
+  config.vm.define 'ubuntu-12.04_64' do |c|
+    c.berkshelf.berksfile_path = "./Berksfile"
+    c.vm.box = "chef-ubuntu-12.04_64"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/ubuntu-12.04/versions/1/providers/virtualbox.box" 
+  end
+
+  config.vm.define 'debian-7.6_64' do |c|
+    c.berkshelf.berksfile_path = "./Berksfile"
+    c.vm.box = "chef-debian-7.6_64"
+    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/debian-7.6/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.provider :virtualbox do |vb|
