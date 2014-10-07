@@ -17,6 +17,7 @@ override :ruby, version: "2.1.3"
 dependency "ruby"
 dependency "puppet"
 dependency "ubersmithrb"
+dependency "git"
 
 config_file "#{install_path}/etc/puppet/puppet.conf"
 config_file "#{install_path}/etc/sysconfig/puppet"
