@@ -13,6 +13,7 @@ build_iteration 1
 dependency "preparation"
 
 # puppet dependencies/components
+override :ruby, version: "2.1.3"
 dependency "ruby"
 dependency "puppet"
 dependency "ubersmithrb"
