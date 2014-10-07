@@ -17,49 +17,49 @@ Vagrant.configure("2") do |config|
 
   config.vm.define 'centos-5.10_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-centos-5.10_64"
+    c.vm.box = "centos-5.10_64"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-5.10/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'centos-5.10_32' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-centos-5.10_32"
+    c.vm.box = "centos-5.10_32"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-5.10-i386/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'centos-6.5_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-centos-6.5_64"
+    c.vm.box = "centos-6.5_64"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-6.5/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'centos-6.5_32' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-centos-6.5_32"
+    c.vm.box = "centos-6.5_32"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-6.5-i386/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'centos-7.0_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-centos-7.0_64"
+    c.vm.box = "centos-7.0_64"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-7.0/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'ubuntu-14.04_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-ubuntu-14.04_64"
+    c.vm.box = "ubuntu-14.04_64"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/ubuntu-14.04/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'ubuntu-12.04_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-ubuntu-12.04_64"
+    c.vm.box = "ubuntu-12.04_64"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/ubuntu-12.04/versions/1/providers/virtualbox.box" 
   end
 
   config.vm.define 'debian-7.6_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef-debian-7.6_64"
+    c.vm.box = "debian-7.6_64"
     c.vm.box_url = "https://vagrantcloud.com/chef/boxes/debian-7.6/versions/1/providers/virtualbox.box" 
   end
 
