@@ -23,7 +23,9 @@ source :url => "https://github.com/Contegix/ubersmithrb/archive/v#{version}.tar.
 
 relative_path "ubersmithrb-#{version}"
 
-dependencies ["ruby", "rubygems", "puppet"]
+dependency 	"ruby"
+dependency	"rubygems"
+dependency	"puppet"
 
 env = { "PKG_CONFIG_PATH" => "#{install_dir}/embedded/lib/pkgconfig" }
 

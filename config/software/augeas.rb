@@ -28,7 +28,7 @@ source :url => "http://download.augeas.net/archive/augeas-#{version}.tar.gz",
 relative_path "augeas-#{version}"
 
 configure_env =
-  case platform
+  case ohai["platform"]
   when "aix"
     {
       "LDFLAGS" => "-maix64 -L#{install_dir}/embedded/lib -Wl,-blibpath:#{install_dir}/embedded/lib:/usr/lib:/lib",
