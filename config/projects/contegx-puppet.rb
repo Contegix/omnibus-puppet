@@ -25,5 +25,5 @@ config_file "#{install_path}/etc/sysconfig/puppetmaster"
 # version manifest file
 dependency "version-manifest"
 
-exclude "\.git*"
-exclude "bundler\/git"
+exclude "**/.git"
+exclude "**/bundler/git"
