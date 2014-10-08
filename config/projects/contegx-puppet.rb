@@ -1,4 +1,3 @@
-
 name "contegix-puppet"
 maintainer "Contegix LLC"
 homepage "http://www.contegix.com"
