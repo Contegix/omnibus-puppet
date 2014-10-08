@@ -16,10 +16,9 @@
 #
 
 name "ubersmithrb"
-default_version "0.0.1"
+default_version "e0982ee8f85cf5542c7ecc315b56c1c612f93f4c"
 
-source :url => "https://github.com/Contegix/ubersmithrb/archive/v#{version}.tar.gz",
-       :md5 => "ff26ef9ce03c629e3e77d8584bafd347"
+source :git => "git://github.com/Contegix/ubersmithrb.git"
 
 relative_path "ubersmithrb-#{version}"
 
