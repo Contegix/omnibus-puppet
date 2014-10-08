@@ -16,7 +16,7 @@
 #
 
 name "augeas"
-version "0.9.0"
+default_version "0.9.0"
 
 dependency "libxml2"
 dependency "libxslt"
