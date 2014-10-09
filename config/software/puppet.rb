@@ -31,6 +31,6 @@ build do
   command "rm -rf #{install_dir}/embedded/info"
 
   # load default configuration files
-  sync  "#{project_dir}/files/", "#{install_dir}"
+  sync "#{Omnibus::Config.project_root}/files/", "#{install_dir}"
 
 end

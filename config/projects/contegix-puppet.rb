@@ -15,7 +15,6 @@ dependency "preparation"
 override :ruby, version: "2.1.3"
 dependency "ruby"
 dependency "puppet"
-dependency "ubersmithrb"
 dependency "git"
 
 config_file "#{install_dir}/etc/puppet/puppet.conf"
