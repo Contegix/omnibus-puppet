@@ -10,6 +10,7 @@ puppet_services="puppet-agent "
 install_base="/opt/contegix/puppet"
 PROGNAME=$(basename $0)
 OS_MAJOR_REV="$( ${install_base}/bin/facter operatingsystemmajrelease)"
+OS_FAMILY="$( ${install_base}/bin/facter osfamily )"
 
 function error_exit
 {
@@ -28,8 +29,10 @@ done
 # link logrotate configuration
 [ -h /etc/logrotate.d/${prefix}puppet ] || ln -s /opt/contegix/puppet/etc/logrotate.d/puppet /etc/logrotate.d/${prefix}puppet
 
-if [ "${OS_MAJOR_REV}" == "7" ] ; then
+if [ "${OS_MAJOR_REV}" == "7" -a "${OS_FAMILY}" == "RedHat" ] ; then	
 	[ -h /etc/systemd/system/${prefix}puppet-agent.service ] || ln -s ${install_base}/etc/systemd/system/contegix-puppet-agent.service /etc/systemd/system/${prefix}puppet-agent.service	
+	systemctl daemon-reload
+	systemctl disable contegix-puppet-agent.service
 else
 	# link hourly puppet agent cron
 	[ -h /etc/cron.hourly/${prefix}puppet-agent ] || ln -s ${install_base}/etc/cron.hourly/puppet-agent /etc/cron.hourly/${prefix}puppet-agent

@@ -7,7 +7,8 @@
 
 prefix="contegix-"
 puppet_services="puppet-agent" #puppet-master puppet-server puppet-queue"
-
+OS_MAJOR_REV="$( ${install_base}/bin/facter operatingsystemmajrelease )"
+OS_FAMILY="$( ${install_base}/bin/facter osfamily )"
 
 # upgrade
 
@@ -17,11 +18,20 @@ if [ "${1}" -eq "0" ] ; then
 	# Disable and stop puppet services
 	for service in $puppet_services; do
 		service="${prefix}${service}"
-		if [ -h /etc/init.d/${service} ] ; then
-			/etc/init.d/${service} status 2>&1 > /dev/null && /etc/init.d/${service} stop
-			chkconfig ${service} off
-			chkconfig --del ${service}
-			[ -e /etc/init.d/${service} ] && rm -f /etc/init.d/${service}
+		if [ "${OS_MAJOR_REV}" == "7" -a "${OS_FAMILY}" == "RedHat" ] ; then
+			if [ -e /etc/systemd/system/${prefix}puppet-agent.service ] ; then
+		 		systemctl status ${prefix}puppet-agent 2>&1 > /dev/null && systemctl stop ${prefix}puppet-agent	
+				systemctl disable ${prefix}puppet-agent
+				rm -f /etc/systemd/system/${prefix}puppet-agent.service
+				systemctl daemon-reload
+			fi
+		else		
+			if [ -e /etc/init.d/${service} ] ; then
+				/etc/init.d/${service} status 2>&1 > /dev/null && /etc/init.d/${service} stop
+				chkconfig ${service} off
+				chkconfig --del ${service}
+				rm -f /etc/init.d/${service}
+			fi
 		fi
 	done
         # unlink logroate config
