@@ -1,0 +1,13 @@
+[Unit]
+Description=Contegix Puppet agent
+Wants=basic.target
+After=basic.target network.target
+
+[Service]
+Type=forking
+PIDFile=/opt/contegix/puppet/var/run/puppet/agent.pid
+ExecStartPre=/usr/bin/install -d -o puppet -m 755 /opt/contegix/puppet/var/run/puppet
+ExecStart=/opt/contegix/puppet/bin/puppet agent
+
+[Install]
+WantedBy=multi-user.target
