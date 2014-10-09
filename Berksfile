@@ -1,3 +1,3 @@
-site :opscode
+source "https://supermarket.getchef.com"
 
-cookbook "omnibus", "= 1.2.4"
+cookbook "omnibus", "= 2.4.0"
