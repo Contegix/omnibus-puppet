@@ -113,9 +113,9 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision :shell, :inline => <<-OMNIBUS_BUILD
-    export PATH=/usr/local/bin:/home/vagrant/.gem/ruby/2.1.2/bin:/opt/rubies/ruby-2.1.2/lib/ruby/gems/2.1.0/bin:/opt/rubies/ruby-2.1.2/bin:$PATH
+    export PATH=/usr/local/bin:$PATH
     cd #{guest_project_path}
     su vagrant -c "bundle install --binstubs"
-    su vagrant -c "bin/omnibus build project #{project_name}"
+    su vagrant -c "bin/omnibus build #{project_name}"
   OMNIBUS_BUILD
 end

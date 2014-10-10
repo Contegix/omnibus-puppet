@@ -2,7 +2,7 @@ name "contegix-puppet"
 maintainer "Contegix LLC"
 homepage "http://www.contegix.com"
 
-replace        "contegix-puppet"
+replaces        "contegix-puppet"
 install_dir    "/opt/contegix/puppet"
 #build_version   Omnibus::BuildVersion.new.semver
 build_version   "3.6.2"
