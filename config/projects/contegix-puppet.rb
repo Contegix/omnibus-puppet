@@ -13,9 +13,9 @@ dependency "preparation"
 
 # puppet dependencies/components
 override :ruby, version: "2.1.3"
+dependency "git"
 dependency "ruby"
 dependency "puppet"
-dependency "git"
 
 config_file "#{install_dir}/etc/puppet/puppet.conf"
 config_file "#{install_dir}/etc/sysconfig/puppet"

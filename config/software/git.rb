@@ -21,7 +21,6 @@ dependency "curl"
 dependency "zlib"
 dependency "openssl"
 dependency "pcre"
-dependency "libiconv"
 dependency "expat"
 
 relative_path "git-#{version}"
@@ -35,11 +34,10 @@ build do
     "NO_PYTHON"          => "1",
     "NO_TCLTK"           => "1",
     "NO_PERL"            => "1",
+    "NO_ICONV"           => "1",
     "NO_R_TO_GCC_LINKER" => "1",
-    "NEEDS_LIBICONV"     => "1", 
 
     "ZLIB_PATH"  => "#{install_dir}/embedded",
-    "ICONVDIR"   => "#{install_dir}/embedded",
     "OPENSSLDIR" => "#{install_dir}/embedded",
     "EXPATDIR"   => "#{install_dir}/embedded",
     "CURLDIR"    => "#{install_dir}/embedded",
@@ -47,5 +45,6 @@ build do
   )
 
   command "make prefix=#{install_dir}/embedded", env: env
+  command "make strip prefix=#{install_dir}/embedded", env: env
   command "make install prefix=#{install_dir}/embedded", env: env
 end
