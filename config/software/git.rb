@@ -30,12 +30,13 @@ source url: "https://github.com/git/git/archive/v#{version}.tar.gz",
 
 build do
   env = with_standard_compiler_flags(with_embedded_path).merge(
-    "NO_GETTEXT"	 => "1",
-    "NO_PYTHON"          => "1",
-    "NO_TCLTK"           => "1",
-    "NO_PERL"            => "1",
-    "NO_ICONV"           => "1",
-    "NO_R_TO_GCC_LINKER" => "1",
+    "NO_GETTEXT"	 	=> "1",
+    "NO_PYTHON"          	=> "1",
+    "NO_TCLTK"           	=> "1",
+    "NO_PERL"            	=> "1",
+    "NO_ICONV"           	=> "1",
+    "NO_INSTALL_HARDLINKS"      => "1",
+    "NO_R_TO_GCC_LINKER" 	=> "1",
 
     "ZLIB_PATH"  => "#{install_dir}/embedded",
     "OPENSSLDIR" => "#{install_dir}/embedded",
