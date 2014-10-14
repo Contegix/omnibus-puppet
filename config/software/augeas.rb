@@ -60,7 +60,7 @@ configure_env =
     {
       #"LDFLAGS" => "-Wl,-rpath #{install_dir}/embedded/lib -Wl,--start-group -Wl,-L#{install_dir}/embedded/lib -Wl,-lxml2 -Wl,-lz -Wl,--end-group",
       #"LDFLAGS" => "-Wl,-rpath #{install_dir}/embedded/lib -Wl,-L#{install_dir}/embedded/lib -Wl,-lxml2 -Wl,--exclude-libs=/usr/lib64/libxml2.so.2 -Wl,--exclude-libs=/lib64/libz.so.1",
-      "LDFLAGS" => "-R#{install_dir}/embedded/lib -L#{install_dir}/embedded/lib -lxml2 -lz",
+      "LDFLAGS" => "-Wl,-R#{install_dir}/embedded/lib -L#{install_dir}/embedded/lib -lxml2 -lz",
       "CFLAGS" => "-I#{install_dir}/embedded/include -L#{install_dir}/embedded/lib",
       "LIBXML_LIBS" => "-L#{install_dir}/embedded/lib",
       "LIBXML_CFLAGS" => "-L#{install_dir}/embedded/lib -I#{install_dir}/embedded/include/libxml2",
