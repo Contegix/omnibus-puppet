@@ -69,16 +69,24 @@ configure_env =
   end
 
 build do
-  patch :source => "augeas-0.9.0-00-90e76d70.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-01-f4c2d18a.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-02-93e9adab.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-03-b82149e2.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-04-f591ddde.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-05-7f92c1be.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-06-59d5c537.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-07-cf9338b7.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-08-782693fd-rebased.patch" , :plevel => 1
-  patch :source => "augeas-0.9.0-09-f78136a5-rebased.patch" , :plevel => 1
+  patch :source => "augeas-1.1.0-grub-setkey.patch", 			:plevel => 1
+  patch :source => "augeas-1.1.0-incl-double-slash.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-sysconfig-comments.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-testPermsErrorReported-root.patch", 	:plevel => 1
+  patch :source => "augeas-1.1.0-shellvars-multi-export.patch", 	:plevel => 1
+  patch :source => "augeas-1.1.0-cve-2013-6412-umask.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-yum-cron.patch", 			:plevel => 1
+  patch :source => "augeas-1.1.0-shellvars-firewalld.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-grub-foreground.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-yum-equals-space.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-shellvars-case-semicolons.patch", 	:plevel => 1
+  patch :source => "augeas-1.1.0-iproute2-dsfield-hex.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-iproute2-protos-slash.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-yum-exclude.patch", 			:plevel => 1
+  patch :source => "augeas-1.1.0-dovecot-mailbox.patch", 		:plevel => 1
+  patch :source => "augeas-1.1.0-keepalived-virtual-servers.patch", 	:plevel => 1
+  patch :source => "augeas-1.1.0-krb5-braces.patch", 			:plevel => 1
+
   
 
   command "./configure --prefix=#{install_dir}/embedded --without-selinux" , :env => configure_env
