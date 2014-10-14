@@ -16,14 +16,14 @@
 #
 
 name "augeas"
-default_version "0.9.0"
+default_version "1.1.0"
 
 dependency "libxml2"
 dependency "libxslt"
 dependency "readline"
 
-source :url => "http://download.augeas.net/archive/augeas-#{version}.tar.gz",
-       :md5 => "5ef0ce53ce4c75f59ab2523506731084"
+source :url => "http://download.augeas.net/augeas-#{version}.tar.gz",
+       :md5 => "520ce983457ff9ffa3816bc41a9f328b"
 
 relative_path "augeas-#{version}"
 
