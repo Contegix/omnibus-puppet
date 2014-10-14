@@ -24,7 +24,7 @@ source :url => "ftp://ftp.cwru.edu/pub/bash/readline-#{version}.tar.gz",
 relative_path "readline-#{version}"
 
 configure_env =
-  case platform
+  case Ohai['platform']
   when "aix"
     {
       "LDFLAGS" => "-maix64 -L#{install_dir}/embedded/lib -Wl,-blibpath:#{install_dir}/embedded/lib:/usr/lib:/lib",
