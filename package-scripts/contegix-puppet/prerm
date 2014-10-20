@@ -4,11 +4,16 @@
 # before package is uninstalled.
 #
 
-
 prefix="contegix-"
-puppet_services="puppet-agent" #puppet-master puppet-server puppet-queue"
-OS_MAJOR_REV="$( ${install_base}/bin/facter operatingsystemmajrelease )"
-OS_FAMILY="$( ${install_base}/bin/facter osfamily )"
+puppet_services="puppet-agent "
+install_base="/opt/contegix/puppet"
+if [ -f /etc/redhat-release ]; then
+        os_family="RedHat"
+        os_major_rev="$(perl -pe 's/.*release (\d+)\.\d+.*/$1/' /etc/redhat-release)"
+else   
+        os_family="Unknown"
+        os_major_rev="Unknown"
+fi
 
 # upgrade
 
