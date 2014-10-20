@@ -25,10 +25,10 @@ function error_exit
 }
 
 for service in $puppet_services; do
-	if [ ! -e /etc/init.d/${prefix}$service ] ; then 
-		ln -s /opt/contegix/puppet/etc/init.d/$service /etc/init.d/${prefix}${service}
-		chkconfig --add ${prefix}$service
+	if [ -e /etc/init.d/${prefix}$service ] ; then 
 		chkconfig ${prefix}$service off
+                chkconfig --del ${prefix}${service}
+                rm -f /etc/init.d/${prefix}${service}
 	fi
 done
 
@@ -36,12 +36,5 @@ done
 [ -h /etc/logrotate.d/${prefix}puppet ] || ln -s /opt/contegix/puppet/etc/logrotate.d/puppet /etc/logrotate.d/${prefix}puppet
 # link hourly puppet agent cron
 [ -h /etc/cron.hourly/${prefix}puppet-agent ] || ln -s ${install_base}/etc/cron.hourly/puppet-agent /etc/cron.hourly/${prefix}puppet-agent
-
-if [ "${os_major_rev}" == "7" -a "${os_family}" == "RedHat" ] ; then	
-	[ -h /etc/systemd/system/${prefix}puppet-agent.service ] || ln -s ${install_base}/etc/systemd/system/contegix-puppet-agent.service /etc/systemd/system/${prefix}puppet-agent.service	
-	systemctl daemon-reload
-	systemctl disable contegix-puppet-agent.service
-else
-fi
 
 exit 0
