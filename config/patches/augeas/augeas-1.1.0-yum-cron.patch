@@ -1,0 +1,25 @@
+From f1cad0ba3df9d8231cc0651302c7b638d6fdfcb7 Mon Sep 17 00:00:00 2001
+From: Pat Riehecky <prieheck@iwu.edu>
+Date: Tue, 27 Aug 2013 20:03:31 +0100
+Subject: [PATCH 1/5] Yum: add yum-cron*.conf files
+
+(cherry picked from commit 148330ac79660e35b8726c7ec6fc8b6916c8a23e)
+---
+ lenses/yum.aug | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lenses/yum.aug b/lenses/yum.aug
+index 31d4776..585695f 100644
+--- a/lenses/yum.aug
++++ b/lenses/yum.aug
+@@ -50,6 +50,7 @@ let lns    = (empty | comment)* . record*
+ 
+   let filter = (incl "/etc/yum.conf")
+       . (incl "/etc/yum.repos.d/*")
++      . (incl "/etc/yum/yum-cron*.conf") 
+       . (incl "/etc/yum/pluginconf.d/*")
+       . (excl "/etc/yum/pluginconf.d/versionlock.list")
+       . Util.stdexcl
+-- 
+1.8.5.3
+

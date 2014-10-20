@@ -1,0 +1,279 @@
+From 6eba1a21df59cc1638a2047f24080ebe657b497e Mon Sep 17 00:00:00 2001
+From: Dominic Cleal <dcleal@redhat.com>
+Date: Fri, 21 Feb 2014 10:56:57 +0000
+Subject: [PATCH 2/3] Keepalived: add more virtual/real server settings and
+ checks
+
+Fixes RHBZ#1064388
+
+(cherry picked from commit 1f6ec69ffcd46a5b6937025973a2f2337df2727d)
+
+Conflicts:
+	NEWS
+---
+ lenses/keepalived.aug            |  81 +++++++++++++++++++++++--
+ lenses/tests/test_keepalived.aug | 128 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 203 insertions(+), 6 deletions(-)
+
+diff --git a/lenses/keepalived.aug b/lenses/keepalived.aug
+index 1fe3aa2..9fd02ff 100644
+--- a/lenses/keepalived.aug
++++ b/lenses/keepalived.aug
+@@ -83,6 +83,10 @@ let field (kw:regexp) (sto:lens) = indent . Build.key_value_line_comment kw sep_
+ A single word *)
+ let flag (kw:regexp) = [ indent . key kw . comment_or_eol ]
+ 
++(* View: ip_port
++   An IP <space> port pair *)
++let ip_port = [ label "ip" . sto_word ] . sep_spc . [ label "port" . sto_num ]
++
+ (* View: lens_block 
+ A generic block with a title lens.
+ The definition is very similar to Build.block_newlines
+@@ -220,22 +224,87 @@ let vrrpd_conf = vrrp_sync_group | vrrp_instance | vrrp_script
+ 
+ 
+ (************************************************************************
+- * Group:                 LVS CONFIGURATION
++ * Group:                 REAL SERVER CHECKS CONFIGURATION
+  *************************************************************************)
+ 
+ (* View: tcp_check_field *)
+-let tcp_check_field = field /connect_(timeout|port)/ sto_num
++let tcp_check_field =
++      let word_re = "bindto"
++   in let num_re = /connect_(timeout|port)/
++   in field word_re sto_word
++    | field num_re sto_num
++
++(* View: misc_check_field *)
++let misc_check_field =
++      let flag_re = "misc_dynamic"
++   in let num_re = "misc_timeout"
++   in let to_eol_re = "misc_path"
++   in field num_re sto_num
++    | flag flag_re
++    | field to_eol_re sto_to_eol
++
++(* View: smtp_host_check_field *)
++let smtp_host_check_field =
++      let word_re = "connect_ip" | "bindto"
++   in let num_re = "connect_port"
++   in field word_re sto_word
++    | field num_re sto_num
++
++(* View: smtp_check_field *)
++let smtp_check_field =
++      let word_re = "connect_ip" | "bindto"
++   in let num_re = "connect_timeout" | "retry" | "delay_before_retry"
++   in let to_eol_re = "helo_name"
++   in field word_re sto_word
++    | field num_re sto_num
++    | field to_eol_re sto_to_eol
++    | block "host" smtp_host_check_field
++
++(* View: http_url_check_field *)
++let http_url_check_field =
++      let word_re = "digest"
++   in let num_re = "status_code"
++   in let to_eol_re = "path"
++   in field word_re sto_word
++    | field num_re sto_num
++    | field to_eol_re sto_to_eol
++
++(* View: http_check_field *)
++let http_check_field =
++      let num_re = /connect_(timeout|port)/ | "nb_get_retry" | "delay_before_retry"
++   in field num_re sto_num
++    | block "url" http_url_check_field
+ 
+ (* View: real_server_field *)
+-let real_server_field = field "weight" sto_num
+-                      | block "TCP_CHECK" tcp_check_field
++let real_server_field =
++      let num_re = "weight"
++   in let flag_re = "inhibit_on_failure"
++   in let to_eol_re = /notify_(up|down)/
++   in field num_re sto_num
++    | flag flag_re
++    | field to_eol_re sto_to_eol
++    | block "TCP_CHECK" tcp_check_field
++    | block "MISC_CHECK" misc_check_field
++    | block "SMTP_CHECK" smtp_check_field
++    | block /(HTTP|SSL)_GET/ http_check_field
++
++(************************************************************************
++ * Group:                 LVS CONFIGURATION
++ *************************************************************************)
+ 
+ (* View: virtual_server_field *)
+ let virtual_server_field =
+-      let num_re = "delay_loop"
+-   in let word_re = /lb_(algo|kind)/ | "nat_mask" | "protocol"
++      let num_re = "delay_loop" | "persistence_timeout" | "quorum" | "hysteresis"
++   in let word_re = /lb_(algo|kind)/ | "nat_mask" | "protocol" | "persistence_granularity"
++                      | "virtualhost"
++   in let flag_re = "ops" | "ha_suspend" | "alpha" | "omega"
++   in let to_eol_re = /quorum_(up|down)/
++   in let ip_port_re = "sorry_server"
+    in field num_re sto_num
+     | field word_re sto_word
++    | flag flag_re
++    | field to_eol_re sto_to_eol
++    | field ip_port_re ip_port
+     | named_block_arg "real_server" "ip" "port" real_server_field
+ 
+ (* View: virtual_server *)
+diff --git a/lenses/tests/test_keepalived.aug b/lenses/tests/test_keepalived.aug
+index 615509e..371df25 100644
+--- a/lenses/tests/test_keepalived.aug
++++ b/lenses/tests/test_keepalived.aug
+@@ -118,6 +118,8 @@ virtual_server 192.168.1.11 22 {
+ 
+     protocol TCP 
+ 
++    sorry_server 10.20.40.30 22
++
+     ! there can be as many real_server blocks as you need 
+ 
+     real_server 10.20.40.10 22 { 
+@@ -269,6 +271,10 @@ weight 2                        # add 2 points of prio if OK
+          { }
+          { "protocol" = "TCP" }
+          { }
++         { "sorry_server"
++           { "ip" = "10.20.40.30" }
++           { "port" = "22" } }
++         { }
+          { "#comment" = "there can be as many real_server blocks as you need" }
+          { }
+          { "real_server"
+@@ -312,3 +318,125 @@ weight 2                        # add 2 points of prio if OK
+        { }
+        { "#comment" = "that's all" }
+ 
++(* Variable: tcp_check
++   An example of a TCP health checker *)
++let tcp_check = "virtual_server 192.168.1.11 22 {
++    real_server 10.20.40.10 22 {
++        TCP_CHECK {
++            connect_timeout 3
++            connect_port 22
++            bindto 192.168.1.1
++        }
++    }
++}
++"
++test Keepalived.lns get tcp_check =
++  { "virtual_server"
++    { "ip" = "192.168.1.11" }
++    { "port" = "22" }
++    { "real_server"
++      { "ip" = "10.20.40.10" }
++      { "port" = "22" }
++      { "TCP_CHECK"
++        { "connect_timeout" = "3" }
++        { "connect_port" = "22" }
++        { "bindto" = "192.168.1.1" } } } }
++
++(* Variable: misc_check
++   An example of a MISC health checker *)
++let misc_check = "virtual_server 192.168.1.11 22 {
++    real_server 10.20.40.10 22 {
++        MISC_CHECK {
++            misc_path /usr/local/bin/server_test
++            misc_timeout 3
++            misc_dynamic
++        }
++    }
++}
++"
++test Keepalived.lns get misc_check =
++  { "virtual_server"
++    { "ip" = "192.168.1.11" }
++    { "port" = "22" }
++    { "real_server"
++      { "ip" = "10.20.40.10" }
++      { "port" = "22" }
++      { "MISC_CHECK"
++        { "misc_path" = "/usr/local/bin/server_test" }
++        { "misc_timeout" = "3" }
++        { "misc_dynamic" } } } }
++
++(* Variable: smtp_check
++   An example of an SMTP health checker *)
++let smtp_check = "virtual_server 192.168.1.11 22 {
++    real_server 10.20.40.10 22 {
++        SMTP_CHECK {
++            host {
++              connect_ip 10.20.40.11
++              connect_port 587
++              bindto 192.168.1.1
++            }
++            connect_timeout 3
++            retry 5
++            delay_before_retry 10
++            helo_name \"Testing Augeas\"
++        }
++    }
++}
++"
++test Keepalived.lns get smtp_check =
++  { "virtual_server"
++    { "ip" = "192.168.1.11" }
++    { "port" = "22" }
++    { "real_server"
++      { "ip" = "10.20.40.10" }
++      { "port" = "22" }
++      { "SMTP_CHECK"
++        { "host"
++          { "connect_ip" = "10.20.40.11" }
++          { "connect_port" = "587" }
++          { "bindto" = "192.168.1.1" } }
++        { "connect_timeout" = "3" }
++        { "retry" = "5" }
++        { "delay_before_retry" = "10" }
++        { "helo_name" = "\"Testing Augeas\"" } } } }
++
++(* Variable: http_check
++   An example of an HTTP health checker *)
++let http_check = "virtual_server 192.168.1.11 22 {
++    real_server 10.20.40.10 22 {
++        HTTP_GET {
++            url {
++              path /mrtg2/
++              digest 9b3a0c85a887a256d6939da88aabd8cd
++              status_code 200
++            }
++            connect_timeout 3
++            connect_port 8080
++            nb_get_retry 5
++            delay_before_retry 10
++        }
++        SSL_GET {
++            connect_port 8443
++        }
++    }
++}
++"
++test Keepalived.lns get http_check =
++  { "virtual_server"
++    { "ip" = "192.168.1.11" }
++    { "port" = "22" }
++    { "real_server"
++      { "ip" = "10.20.40.10" }
++      { "port" = "22" }
++      { "HTTP_GET"
++        { "url"
++          { "path" = "/mrtg2/" }
++          { "digest" = "9b3a0c85a887a256d6939da88aabd8cd" }
++          { "status_code" = "200" } }
++        { "connect_timeout" = "3" }
++        { "connect_port" = "8080" }
++        { "nb_get_retry" = "5" }
++        { "delay_before_retry" = "10" } }
++      { "SSL_GET"
++        { "connect_port" = "8443" } } } }
+-- 
+1.8.5.3
+

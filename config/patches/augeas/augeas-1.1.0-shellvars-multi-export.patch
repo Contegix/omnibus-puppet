@@ -1,0 +1,132 @@
+From c40fc2b24f9f3b104603e3d19ff2b0975b1af9cc Mon Sep 17 00:00:00 2001
+From: Dominic Cleal <dcleal@redhat.com>
+Date: Thu, 2 Jan 2014 13:50:41 +0000
+Subject: [PATCH] Shellvars, Sysconfig: map "bare" export and unset lines using
+ seq to handle multiple variables
+
+Fixes RHBZ#1033795
+
+(cherry picked from commit 15ec3753b0ba82e155426288572f6b92c3cafc59)
+
+Conflicts:
+	NEWS
+	lenses/tests/test_shellvars.aug
+---
+ lenses/shellvars.aug            |  6 ++++--
+ lenses/tests/test_shellvars.aug | 21 ++++++++++++++++-----
+ lenses/tests/test_sysconfig.aug |  8 +++++---
+ 3 files changed, 25 insertions(+), 10 deletions(-)
+
+diff --git a/lenses/shellvars.aug b/lenses/shellvars.aug
+index a88ad83..da19379 100644
+--- a/lenses/shellvars.aug
++++ b/lenses/shellvars.aug
+@@ -63,8 +63,10 @@ module Shellvars =
+            . eq . (simple_value | array) . comment_or_eol ]
+ 
+   let var_action (name:string) =
+-    [ Util.indent . xchgs name ("@" . name) . Util.del_ws_spc
+-    . store (key_re | matching_re) . comment_or_eol ]
++    Util.indent . del name name . Util.del_ws_spc .
++      [ label ("@" . name) . counter "var_action"
++        . Build.opt_list [ seq "var_action" . store (key_re | matching_re) ] Util.del_ws_spc
++        . comment_or_eol ]
+ 
+   let unset = var_action "unset"
+   let bare_export = var_action "export"
+diff --git a/lenses/tests/test_shellvars.aug b/lenses/tests/test_shellvars.aug
+index 9aea433..79a5a4e 100644
+--- a/lenses/tests/test_shellvars.aug
++++ b/lenses/tests/test_shellvars.aug
+@@ -30,7 +30,8 @@ unset ONBOOT    #   We do not want this var
+     { "#comment" = "DHCP_HOSTNAME=host.example.com" }
+     { "NETMASK" = "255.255.255.0" }
+     { "NETWORK" = "172.31.0.0" }
+-    { "@unset"   = "ONBOOT"
++    { "@unset"
++        { "1" = "ONBOOT" }
+         { "#comment" = "We do not want this var" } }
+ 
+   test lns put eth_static after
+@@ -147,7 +148,8 @@ unset ONBOOT    #   We do not want this var
+ 
+   (* Bug 109: allow a bare export *)
+   test lns get "export FOO\n" =
+-  { "@export" = "FOO" }
++  { "@export"
++    { "1" = "FOO" } }
+ 
+   (* Bug 73: allow ulimit builtin *)
+   test lns get "ulimit -c unlimited\n" =
+@@ -259,7 +261,8 @@ esac\n" =
+     { "@case_entry" = "/tmp/file2"
+       { ".source" = "/tmp/file2" } }
+     { "@case_entry" = "*"
+-      { "@unset" = "f" } } }
++      { "@unset"
++        { "1" = "f" } } } }
+ 
+   (* Select *)
+   test lns get "select i in a b c; do . /tmp/file$i
+@@ -346,7 +349,8 @@ esac\n" =
+     { "#comment" = "comment before 2" }
+     { "@case_entry" = "*"
+       { "#comment" = "comment in 2" }
+-      { "@unset" = "f" } }
++      { "@unset"
++        { "1" = "f" } } }
+     { "#comment" = "comment after" } }
+ 
+   (* Empty case *)
+@@ -397,7 +401,8 @@ esac\n" =
+ 
+   (* unset can be used on wildcard variables *)
+   test Shellvars.lns get "unset ${!LC_*}\n" =
+-  { "@unset" = "${!LC_*}" }
++  { "@unset"
++    { "1" = "${!LC_*}" } }
+ 
+   (* Empty comment before entries *)
+   test Shellvars.lns get "# \nfoo=bar\n" =
+@@ -435,6 +440,12 @@ esac\n" =
+     { "#comment" = "foo" }
+     { "foo" = "bar" }
+ 
++  (* Export of multiple variables, RHBZ#1033795 *)
++  test lns get "export TestVar1 TestVar2\n" =
++    { "@export"
++      { "1" = "TestVar1" }
++      { "2" = "TestVar2" } }
++
+ (* Local Variables: *)
+ (* mode: caml       *)
+ (* End:             *)
+diff --git a/lenses/tests/test_sysconfig.aug b/lenses/tests/test_sysconfig.aug
+index 539ad99..fa1601a 100644
+--- a/lenses/tests/test_sysconfig.aug
++++ b/lenses/tests/test_sysconfig.aug
+@@ -30,8 +30,9 @@ unset ONBOOT    #   We do not want this var
+     { "#comment" = "DHCP_HOSTNAME=host.example.com" }
+     { "NETMASK" = "255.255.255.0" }
+     { "NETWORK" = "172.31.0.0" }
+-    { "@unset"   = "ONBOOT"
+-        { "#comment" = "We do not want this var" } }
++    { "@unset"
++      { "1" = "ONBOOT" }
++      { "#comment" = "We do not want this var" } }
+ 
+   test lns put eth_static after
+       set "BOOTPROTO" "dhcp" ;
+@@ -124,7 +125,8 @@ unset ONBOOT    #   We do not want this var
+ 
+   (* Bug 109: allow a bare export *)
+   test lns get "export FOO\n" =
+-  { "@export" = "FOO" }
++  { "@export"
++    { "1" = "FOO" } }
+ 
+   (* Check we put quotes in when changes require them *)
+   test lns put "var=\"v\"\n" after rm "/foo" =
+-- 
+1.8.4.2
+

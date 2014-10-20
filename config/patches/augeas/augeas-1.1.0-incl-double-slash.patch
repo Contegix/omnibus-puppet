@@ -1,0 +1,143 @@
+From 361adbf9e520d695ae13efe6084cbcdebe4779e2 Mon Sep 17 00:00:00 2001
+From: Dominic Cleal <dcleal@redhat.com>
+Date: Tue, 19 Nov 2013 09:39:23 +0000
+Subject: [PATCH] * src/transform.c (filter_matches): wrap fnmatch to ensure
+ that an incl   pattern containing "//" matches file paths
+
+Fixes RHBZ#1031084
+---
+ src/transform.c   | 38 ++++++++++++++++++++++++++++++++++----
+ tests/test-save.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 73 insertions(+), 4 deletions(-)
+
+diff --git a/src/transform.c b/src/transform.c
+index 1ee8da8..ccbe422 100644
+--- a/src/transform.c
++++ b/src/transform.c
+@@ -142,6 +142,33 @@ static char *mtime_as_string(struct augeas *aug, const char *fname) {
+     return NULL;
+ }
+ 
++/* fnmatch(3) which will match // in a pattern to a path, like glob(3) does */
++static int fnmatch_normalize(const char *pattern, const char *string, int flags) {
++    int i, j, r;
++    char *pattern_norm = NULL;
++
++    r = ALLOC_N(pattern_norm, strlen(pattern) + 1);
++    if (r < 0)
++        goto error;
++
++    for (i = 0, j = 0; i < strlen(pattern); i++) {
++        if (pattern[i] != '/' || pattern[i+1] != '/') {
++            pattern_norm[j] = pattern[i];
++            j++;
++        }
++    }
++    pattern_norm[j] = 0;
++
++    r = fnmatch(pattern_norm, string, flags);
++    FREE(pattern_norm);
++    return r;
++
++ error:
++    if (pattern_norm != NULL)
++        FREE(pattern_norm);
++    return -1;
++}
++
+ static bool file_current(struct augeas *aug, const char *fname,
+                          struct tree *finfo) {
+     struct tree *mtime = tree_child(finfo, s_mtime);
+@@ -217,9 +244,12 @@ static int filter_generate(struct tree *xfm, const char *root,
+ 
+             if (strchr(e->value, SEP) == NULL)
+                 path = pathbase(path);
+-            if ((r = fnmatch(e->value, path, fnm_flags)) == 0) {
++
++            r = fnmatch_normalize(e->value, path, fnm_flags);
++            if (r < 0)
++                goto error;
++            else if (r == 0)
+                 include = false;
+-            }
+         }
+ 
+         if (include)
+@@ -254,7 +284,7 @@ static int filter_generate(struct tree *xfm, const char *root,
+ static int filter_matches(struct tree *xfm, const char *path) {
+     int found = 0;
+     list_for_each(f, xfm->children) {
+-        if (is_incl(f) && fnmatch(f->value, path, fnm_flags) == 0) {
++        if (is_incl(f) && fnmatch_normalize(f->value, path, fnm_flags) == 0) {
+             found = 1;
+             break;
+         }
+@@ -262,7 +292,7 @@ static int filter_matches(struct tree *xfm, const char *path) {
+     if (! found)
+         return 0;
+     list_for_each(f, xfm->children) {
+-        if (is_excl(f) && (fnmatch(f->value, path, fnm_flags) == 0))
++        if (is_excl(f) && (fnmatch_normalize(f->value, path, fnm_flags) == 0))
+             return 0;
+     }
+     return 1;
+diff --git a/tests/test-save.c b/tests/test-save.c
+index 04b86f7..617ef31 100644
+--- a/tests/test-save.c
++++ b/tests/test-save.c
+@@ -183,6 +183,44 @@ static void testRelPath(CuTest *tc) {
+     CuAssertIntEquals(tc, 1, r);
+ }
+ 
++/* Check that loading and saving a file with // in the incl pattern works.
++ * RHBZ#1031084
++ */
++static void testDoubleSlashPath(CuTest *tc) {
++    int r;
++
++    r = aug_rm(aug, "/augeas/load/*");
++    CuAssertPositive(tc, r);
++
++    r = aug_set(aug, "/augeas/load/Hosts/lens", "Hosts.lns");
++    CuAssertRetSuccess(tc, r);
++    r = aug_set(aug, "/augeas/load/Hosts/incl", "/etc//hosts");
++    CuAssertRetSuccess(tc, r);
++    r = aug_load(aug);
++    CuAssertRetSuccess(tc, r);
++
++    r = aug_match(aug, "/files/etc/hosts/1/alias[ . = 'new']", NULL);
++    CuAssertIntEquals(tc, 0, r);
++
++    r = aug_set(aug, "/files/etc/hosts/1/alias[last() + 1]", "new");
++    CuAssertRetSuccess(tc, r);
++
++    r = aug_save(aug);
++    CuAssertRetSuccess(tc, r);
++    r = aug_match(aug, "/augeas//error", NULL);
++    CuAssertIntEquals(tc, 0, r);
++
++    /* Force reloading the file */
++    r = aug_rm(aug, "/augeas/files//mtime");
++    CuAssertPositive(tc, r);
++
++    r = aug_load(aug);
++    CuAssertRetSuccess(tc, r);
++
++    r = aug_match(aug, "/files/etc/hosts/1/alias[. = 'new']", NULL);
++    CuAssertIntEquals(tc, 1, r);
++}
++
+ int main(void) {
+     char *output = NULL;
+     CuSuite* suite = CuSuiteNew();
+@@ -206,6 +244,7 @@ int main(void) {
+     SUITE_ADD_TEST(suite, testMultipleXfm);
+     SUITE_ADD_TEST(suite, testMtime);
+     SUITE_ADD_TEST(suite, testRelPath);
++    SUITE_ADD_TEST(suite, testDoubleSlashPath);
+ 
+     CuSuiteRun(suite);
+     CuSuiteSummary(suite, &output);
+-- 
+1.8.3.1
+

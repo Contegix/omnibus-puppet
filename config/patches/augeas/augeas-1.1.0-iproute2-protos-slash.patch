@@ -1,0 +1,91 @@
+From 13a5a36d4da2cb456b338b94025150d8e3847a5f Mon Sep 17 00:00:00 2001
+From: Dominic Cleal <dcleal@redhat.com>
+Date: Wed, 12 Feb 2014 10:19:21 +0000
+Subject: [PATCH 2/2] IPRoute2: handle "/" in protocol names, swap ID and name
+ fields
+
+This is an incompatible change.
+
+Fixes RHBZ#1063968
+
+(cherry picked from commit bd6c783dc05ccf66af02fe24af703737823a99ad)
+
+Conflicts:
+	NEWS
+---
+ lenses/iproute2.aug            |  2 +-
+ lenses/tests/test_iproute2.aug | 34 ++++++++++++++++++++++------------
+ 2 files changed, 23 insertions(+), 13 deletions(-)
+
+diff --git a/lenses/iproute2.aug b/lenses/iproute2.aug
+index 6f6b1ba..fa3dcb7 100644
+--- a/lenses/iproute2.aug
++++ b/lenses/iproute2.aug
+@@ -3,7 +3,7 @@ module IPRoute2 =
+ 
+   let empty   = [ del /[ \t]*#?[ \t]*\n/ "\n" ]
+   let id = Rx.hex | Rx.integer
+-  let record = [ store id . del /[ \t]+/ "\t" . key /[a-zA-Z0-9-]+/ . Util.comment_or_eol ]
++  let record = [ key id . del /[ \t]+/ "\t" . store /[a-zA-Z0-9\/-]+/ . Util.comment_or_eol ]
+ 
+   let lns = ( empty | Util.comment | record ) *
+ 
+diff --git a/lenses/tests/test_iproute2.aug b/lenses/tests/test_iproute2.aug
+index cc24efe..2acd367 100644
+--- a/lenses/tests/test_iproute2.aug
++++ b/lenses/tests/test_iproute2.aug
+@@ -24,6 +24,11 @@ let conf = "
+ #
+ 0x00  default
+ 0x80  flash-override
++
++# From rt_protos
++#
++254 gated/aggr
++253 gated/bgp
+ "
+ 
+ test IPRoute2.lns get conf =
+@@ -32,22 +37,27 @@ test IPRoute2.lns get conf =
+   { }
+   { "#comment" = "reserved values" }
+   { }
+-  { "local" = "255" }
+-  { "main" = "254" }
+-  { "default" = "253" }
+-  { "unspec" = "0" }
++  { "255" = "local" }
++  { "254" = "main" }
++  { "253" = "default" }
++  { "0" = "unspec" }
+   { }
+   { "#comment" = "local" }
+   { }
+   { "#comment" = "1	inr.ruhep" }
+-  { "h3g0" = "200" }
+-  { "adsl1" = "201" }
+-  { "adsl2" = "202" }
+-  { "adsl3" = "203" }
+-  { "adsl4" = "204" }
+-  { "wifi0" = "205" }
++  { "200" = "h3g0" }
++  { "201" = "adsl1" }
++  { "202" = "adsl2" }
++  { "203" = "adsl3" }
++  { "204" = "adsl4" }
++  { "205" = "wifi0" }
+   { }
+   { "#comment" = "From rt_dsfield" }
+   { }
+-  { "default" = "0x00" }
+-  { "flash-override" = "0x80" }
++  { "0x00" = "default" }
++  { "0x80" = "flash-override" }
++  { }
++  { "#comment" = "From rt_protos" }
++  { }
++  { "254" = "gated/aggr" }
++  { "253" = "gated/bgp" }
+-- 
+1.8.5.3
+

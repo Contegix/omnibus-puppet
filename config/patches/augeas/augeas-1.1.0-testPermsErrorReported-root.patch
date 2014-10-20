@@ -1,0 +1,38 @@
+From b0fa354ecada84f7a4fdf586c08ae99ca2dd9a65 Mon Sep 17 00:00:00 2001
+From: Dominic Cleal <dcleal@redhat.com>
+Date: Mon, 2 Sep 2013 18:29:49 +0100
+Subject: [PATCH] * tests/test-load.c (testPermsErrorReported): skip
+ permissions test when root
+
+---
+ tests/test-load.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/tests/test-load.c b/tests/test-load.c
+index ef6c01a..fb63a62 100644
+--- a/tests/test-load.c
++++ b/tests/test-load.c
+@@ -21,6 +21,8 @@
+  */
+ 
+ #include <config.h>
++#include <sys/types.h>
++#include <unistd.h>
+ 
+ #include "augeas.h"
+ 
+@@ -529,6 +531,11 @@ static void testParseErrorReported(CuTest *tc) {
+ 
+ /* Test failed file opening is reported, e.g. EACCES */
+ static void testPermsErrorReported(CuTest *tc) {
++    if (getuid() == 0) {
++        puts("pending (testPermsErrorReported): can't test permissions under root account");
++        return;
++    }
++
+     augeas *aug = NULL;
+     int r;
+     const char *s;
+-- 
+1.8.4.2
+

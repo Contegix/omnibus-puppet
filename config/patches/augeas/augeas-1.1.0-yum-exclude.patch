@@ -1,0 +1,231 @@
+From 50792ee989e81b52ed886be967843d85433f0ce5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Rapha=C3=ABl=20Pinson?= <raphael.pinson@camptocamp.com>
+Date: Tue, 3 Dec 2013 10:11:38 +0100
+Subject: [PATCH] Yum.lns: simplify code for combinatory logic of list_entry
+ elements
+
+(cherry picked from commit 9c645afbde88a2bdb5f8b139fde44968b019234c)
+
+Build: Add combinatorics group
+
+(cherry picked from commit 3f57641d8df3ed1edf89cd7641c4c6e84c3a3429)
+
+Yum.lns: split excludes as lists (ticket #275)
+
+(cherry picked from commit c16ccfd64045cb5f9c8793bc7589fc80fc027064)
+---
+ lenses/build.aug            | 57 +++++++++++++++++++++++++++++++++++
+ lenses/tests/test_build.aug | 73 +++++++++++++++++++++++++++++++++++++++++++++
+ lenses/tests/test_yum.aug   | 11 +++++++
+ lenses/yum.aug              | 16 +++++-----
+ 4 files changed, 149 insertions(+), 8 deletions(-)
+
+diff --git a/lenses/build.aug b/lenses/build.aug
+index 2e57356..efc8814 100644
+--- a/lenses/build.aug
++++ b/lenses/build.aug
+@@ -298,3 +298,60 @@ let block_newlines (entry:lens) (comment:lens) =
+  ************************************************************************)
+ let named_block (kw:regexp) (entry:lens) = [ key kw . block entry . eol ]
+ 
++
++(************************************************************************
++ * Group:               COMBINATORICS
++ ************************************************************************)
++
++(************************************************************************
++ * View: combine_two_opt_ord
++ *   Combine two lenses optionally, ensuring first lens is first
++ *   (a, and optionally b)
++ *
++ *   Parameters:
++ *     a:lens - the first lens
++ *     b:lens - the second lens
++ ************************************************************************)
++let combine_two_opt_ord (a:lens) (b:lens) = a . b?
++
++(************************************************************************
++ * View: combine_two_opt
++ *   Combine two lenses optionally
++ *   (either a, b, or both, in any order)
++ *
++ *   Parameters:
++ *     a:lens - the first lens
++ *     b:lens - the second lens
++ ************************************************************************)
++let combine_two_opt (a:lens) (b:lens) =
++  combine_two_opt_ord a b | combine_two_opt_ord b a
++
++
++(************************************************************************
++ * View: combine_three_opt_ord
++ *   Combine three lenses optionally, ensuring first lens is first
++ *   (a followed by either b, c, or any of them, in any order)
++ *
++ *   Parameters:
++ *     a:lens - the first lens
++ *     b:lens - the second lens
++ *     c:lens - the third lens
++ ************************************************************************)
++let combine_three_opt_ord (a:lens) (b:lens) (c:lens) =
++  combine_two_opt_ord a (combine_two_opt b c)
++
++(************************************************************************
++ * View: combine_three_opt
++ *   Combine three lenses optionally
++ *   (either a, b, c, or any of them, in any order)
++ *
++ *   Parameters:
++ *     a:lens - the first lens
++ *     b:lens - the second lens
++ *     c:lens - the third lens
++ ************************************************************************)
++let combine_three_opt (a:lens) (b:lens) (c:lens) =
++    combine_three_opt_ord a b c
++  | combine_three_opt_ord b a c
++  | combine_three_opt_ord c b a
++
+diff --git a/lenses/tests/test_build.aug b/lenses/tests/test_build.aug
+index b9b09fa..bc565f3 100644
+--- a/lenses/tests/test_build.aug
++++ b/lenses/tests/test_build.aug
+@@ -174,3 +174,76 @@ test logrotate_block get "/var/log/wtmp\n/var/log/wtmp2\n{
+     { "monthly" }
+   }
+ 
++
++(************************************************************************
++ * Group:               COMBINATORICS
++ ************************************************************************)
++
++(* View: combine_two_opt
++    A minimalistic optional combination lens *)
++let combine_two_opt =
++     let entry (k:string) = [ key k ]
++  in Build.combine_two_opt (entry "a") (entry "b")
++
++(* Test: combine_two_opt 
++     Should parse ab *)
++test combine_two_opt get "ab" = { "a" } { "b" }
++
++(* Test: combine_two_opt 
++     Should parse ba *)
++test combine_two_opt get "ba" = { "b" } { "a" }
++
++(* Test: combine_two_opt 
++     Should parse a *)
++test combine_two_opt get "a" = { "a" }
++
++(* Test: combine_two_opt 
++     Should parse b *)
++test combine_two_opt get "b" = { "b" }
++
++(* Test: combine_two_opt 
++     Should not parse aa *)
++test combine_two_opt get "aa" = *
++
++(* Test: combine_two_opt 
++     Should not parse bb *)
++test combine_two_opt get "bb" = *
++
++
++(* View: combine_three_opt
++    A minimalistic optional combination lens *)
++let combine_three_opt =
++     let entry (k:string) = [ key k ]
++  in Build.combine_three_opt (entry "a") (entry "b") (entry "c")
++
++(* Test: combine_three_opt 
++     Should parse ab *)
++test combine_three_opt get "ab" = { "a" } { "b" }
++
++(* Test: combine_three_opt 
++     Should parse ba *)
++test combine_three_opt get "ba" = { "b" } { "a" }
++
++(* Test: combine_three_opt 
++     Should parse a *)
++test combine_three_opt get "a" = { "a" }
++
++(* Test: combine_three_opt 
++     Should parse b *)
++test combine_three_opt get "b" = { "b" }
++
++(* Test: combine_three_opt 
++     Should not parse aa *)
++test combine_three_opt get "aa" = *
++
++(* Test: combine_three_opt 
++     Should not parse bbc *)
++test combine_three_opt get "bbc" = *
++
++(* Test: combine_three_opt 
++     Should parse abc *)
++test combine_three_opt get "abc" = { "a" } { "b" } { "c" }
++
++(* Test: combine_three_opt 
++     Should parse cab *)
++test combine_three_opt get "cab" = { "c" } { "a" } { "b" }
+diff --git a/lenses/tests/test_yum.aug b/lenses/tests/test_yum.aug
+index 17d4ea2..2688182 100644
+--- a/lenses/tests/test_yum.aug
++++ b/lenses/tests/test_yum.aug
+@@ -211,6 +211,17 @@ baseurl = http://apt.sw.be/redhat/el6/en/$basearch/rpmforge\n" =
+       { "baseurl" = "http://apt.sw.be/redhat/el6/en/$basearch/rpmforge" }
+     }
+ 
++  (* Test: Yum.lns
++       Issue #275: parse excludes as a list *)
++  test Yum.lns get "[epel]
++name=Extra Packages for Enterprise Linux 6 - $basearch
++exclude=ocs* clamav*
++" =
++    { "epel"
++      { "name" = "Extra Packages for Enterprise Linux 6 - $basearch" }
++      { "exclude" = "ocs*" }
++      { "exclude" = "clamav*" } }
++
+ (* Local Variables: *)
+ (* mode: caml       *)
+ (* End:             *)
+diff --git a/lenses/yum.aug b/lenses/yum.aug
+index 1b13833..030d944 100644
+--- a/lenses/yum.aug
++++ b/lenses/yum.aug
+@@ -11,7 +11,6 @@ let sep      = IniFile.sep "=" "="
+ let empty    = Util.empty
+ let eol      = IniFile.eol
+ 
+-
+ (************************************************************************
+  *                        ENTRY
+  *************************************************************************)
+@@ -23,17 +22,18 @@ let list_entry (list_key:string)  =
+   . (list_sep . Build.opt_list [ label list_key . list_value ] list_sep)?
+   . eol
+ 
+-let entry_re = IniFile.entry_re - ("baseurl" | "gpgkey")
++let entry_re = IniFile.entry_re - ("baseurl" | "gpgkey" | "exclude")
+ 
+ let entry       = IniFile.entry entry_re sep comment
+                 | empty
+ 
+-let entries = entry*
+-            | entry* . list_entry "baseurl" . entry*
+-            | entry* . list_entry "gpgkey" . entry*
+-            | entry* . list_entry "baseurl" . entry* . list_entry "gpgkey" . entry*
+-            | entry* . list_entry "gpgkey" . entry* . list_entry "baseurl" . entry*
+-
++let entries =
++     let list_entry_elem (k:string) = list_entry k . entry*
++  in entry*
++   | entry* . Build.combine_three_opt
++                (list_entry_elem "baseurl")
++                (list_entry_elem "gpgkey")
++                (list_entry_elem "exclude")
+ 
+ 
+ (***********************************************************************a
+-- 
+1.8.5.3
+

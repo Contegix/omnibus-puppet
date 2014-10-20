@@ -1,0 +1,43 @@
+From 92274bd3ff47d3cc4511d934dae06f16b59db7ad Mon Sep 17 00:00:00 2001
+From: Dominic Cleal <dcleal@redhat.com>
+Date: Mon, 16 Dec 2013 20:45:36 +0000
+Subject: [PATCH] Sysconfig: permit empty comments after comment lines
+
+Fixes RHBZ#1043636
+---
+ lenses/sysconfig.aug            | 3 ++-
+ lenses/tests/test_sysconfig.aug | 4 ++++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/lenses/sysconfig.aug b/lenses/sysconfig.aug
+index a39d7f3..ee83af1 100644
+--- a/lenses/sysconfig.aug
++++ b/lenses/sysconfig.aug
+@@ -11,7 +11,8 @@ module Sysconfig =
+   let key_re = Shellvars.key_re
+   let eq = Util.del_str "="
+ 
+-  let comment = Util.comment
++  let eol_for_comment = del /([ \t]*\n)([ \t]*(#[ \t]*)?\n)*/ "\n"
++  let comment = Util.comment_generic_seteol /[ \t]*#[ \t]*/ "# " eol_for_comment
+   let comment_or_eol = Shellvars.comment_or_eol
+ 
+   let empty   = Util.empty
+diff --git a/lenses/tests/test_sysconfig.aug b/lenses/tests/test_sysconfig.aug
+index 3e9356d..539ad99 100644
+--- a/lenses/tests/test_sysconfig.aug
++++ b/lenses/tests/test_sysconfig.aug
+@@ -142,6 +142,10 @@ unset ONBOOT    #   We do not want this var
+   test lns put "var=v\n" after set "/var" "v\"w"=
+     "var='v\"w'\n"
+ 
++  (* RHBZ#1043636: empty comment lines after comments *)
++  test lns get "#MOUNTD_NFS_V3\n#\n" =
++    { "#comment" = "MOUNTD_NFS_V3" }
++
+ (* Local Variables: *)
+ (* mode: caml       *)
+ (* End:             *)
+-- 
+1.8.4.2
+

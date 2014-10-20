@@ -1,0 +1,160 @@
+From bc46ce8269a89a55b87a906226cfe8b54e9e5d11 Mon Sep 17 00:00:00 2001
+From: Matthew Booth <mbooth@redhat.com>
+Date: Tue, 27 Aug 2013 15:24:48 +0100
+Subject: [PATCH 1/3] Grub: support the 'setkey' directive
+
+---
+ lenses/grub.aug            | 7 +++++++
+ lenses/tests/test_grub.aug | 6 ++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/lenses/grub.aug b/lenses/grub.aug
+index 2c19ffa..d8fd5ed 100644
+--- a/lenses/grub.aug
++++ b/lenses/grub.aug
+@@ -132,6 +132,12 @@ module Grub =
+           |[ spc . switch_arg /timeout|lines/ ])* .
+           [ spc . key /console|serial|hercules/ ]* . eol ]
+ 
++    (* View: setkey *)
++    let setkey = [ command "setkey" "" .
++      ( spc . [ label "to" . store Rx.no_spaces ] .
++        spc . [ label "from" . store Rx.no_spaces ] )? .
++      eol ]
++
+     (* View: menu_setting *)
+     let menu_setting = kw_menu_arg "default"
+                      | kw_menu_arg "fallback"
+@@ -145,6 +151,7 @@ module Grub =
+                      | password_arg
+                      | color
+ 		     | device
++                     | setkey
+ 
+     (* View: title *)
+     let title = del /title[ \t=]+/ "title " . value_to_eol . eol
+diff --git a/lenses/tests/test_grub.aug b/lenses/tests/test_grub.aug
+index 3eba710..e4dc228 100644
+--- a/lenses/tests/test_grub.aug
++++ b/lenses/tests/test_grub.aug
+@@ -12,6 +12,8 @@ module Test_grub =
+ device (hd0) HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)
+ password --md5 $1$M9NLj$p2gs87vwNv48BUu.wAfVw0
+ default=0
++setkey
++setkey less backquote
+ background 103332
+ timeout=5
+ splashimage=(hd0,0)/grub/splash.xpm.gz
+@@ -54,6 +56,10 @@ title othermenu
+     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
+         { "md5" } }
+     { "default" = "0" }
++    { "setkey" }
++    { "setkey"
++        { "to" = "less" }
++        { "from" = "backquote" } }
+     { "background" = "103332" }
+     { "timeout" = "5" }
+     { "splashimage" = "(hd0,0)/grub/splash.xpm.gz" }
+-- 
+1.8.3.1
+
+
+From f55175ed0e17a5a4f50a32d9ad5cba5f486eb577 Mon Sep 17 00:00:00 2001
+From: Matthew Booth <mbooth@redhat.com>
+Date: Tue, 27 Aug 2013 15:24:49 +0100
+Subject: [PATCH 2/3] Grub: NFC fix whitespace errors introduced by 4e09d15
+
+Kill tabs!
+---
+ lenses/grub.aug            | 6 +++---
+ lenses/tests/test_grub.aug | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/lenses/grub.aug b/lenses/grub.aug
+index d8fd5ed..a64a572 100644
+--- a/lenses/grub.aug
++++ b/lenses/grub.aug
+@@ -102,8 +102,8 @@ module Grub =
+      *  This is a shell-only directive in upstream grub; the grub versions
+      *  in at least Fedora/RHEL use this to find devices for UEFI boot *)
+     let device =
+-	  [ command "device" "" . Sep.space . store /\([A-Za-z0-9_.-]+\)/ . spc .
+-		  [ label "file" . value_to_eol ] . Util.eol ]
++      [ command "device" "" . Sep.space . store /\([A-Za-z0-9_.-]+\)/ . spc .
++        [ label "file" . value_to_eol ] . Util.eol ]
+ 
+     (* View: color *)
+     let color =
+@@ -150,7 +150,7 @@ module Grub =
+                      | terminal
+                      | password_arg
+                      | color
+-		     | device
++                     | device
+                      | setkey
+ 
+     (* View: title *)
+diff --git a/lenses/tests/test_grub.aug b/lenses/tests/test_grub.aug
+index e4dc228..87bb243 100644
+--- a/lenses/tests/test_grub.aug
++++ b/lenses/tests/test_grub.aug
+@@ -52,7 +52,7 @@ title othermenu
+     { "#comment" = "initrd /initrd-version.img" }
+     { "#comment" = "boot=/dev/sda" }
+     { "device"   = "(hd0)"
+-	    { "file" = "HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)" } }
++        { "file" = "HD(1,800,64000,9895c137-d4b2-4e3b-a93b-dc9ac4)" } }
+     { "password" = "$1$M9NLj$p2gs87vwNv48BUu.wAfVw0"
+         { "md5" } }
+     { "default" = "0" }
+-- 
+1.8.3.1
+
+
+From e3f1c15155fba5c10e74b400f2b06c8a31372420 Mon Sep 17 00:00:00 2001
+From: Matthew Booth <mbooth@redhat.com>
+Date: Tue, 27 Aug 2013 15:24:50 +0100
+Subject: [PATCH 3/3] Grub: support the 'lock' directive
+
+---
+ lenses/grub.aug            | 1 +
+ lenses/tests/test_grub.aug | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/lenses/grub.aug b/lenses/grub.aug
+index a64a572..9f8d6af 100644
+--- a/lenses/grub.aug
++++ b/lenses/grub.aug
+@@ -216,6 +216,7 @@ module Grub =
+         | configfile
+         | module_line
+         | map_line
++        | kw_pres "lock"
+ 
+     (* View: boot *)
+     let boot =
+diff --git a/lenses/tests/test_grub.aug b/lenses/tests/test_grub.aug
+index 87bb243..de6397d 100644
+--- a/lenses/tests/test_grub.aug
++++ b/lenses/tests/test_grub.aug
+@@ -38,6 +38,7 @@ title Fedora (2.6.24.3-34.fc8)
+         initrd /initrd-2.6.24.3-34.fc8.img
+         map (hd0) (hd1)
+ title othermenu
++        lock
+         configfile /boot/grub/othergrub.conf
+ "
+ 
+@@ -88,6 +89,7 @@ title othermenu
+         { "initrd" = "/initrd-2.6.24.3-34.fc8.img" }
+         { "map" { "from" = "(hd0)" } { "to" = "(hd1)" } } }
+     { "title" = "othermenu"
++        { "lock" }
+         { "configfile" = "/boot/grub/othergrub.conf" } }
+ 
+ 
+-- 
+1.8.3.1
+

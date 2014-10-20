@@ -1,0 +1,27 @@
+From 620d73fdec0aa82f2d04d9d3263e036f2bd6d9e2 Mon Sep 17 00:00:00 2001
+From: David Lutterkort <lutter@watzmann.net>
+Date: Tue, 27 Aug 2013 10:39:45 -0700
+Subject: [PATCH 2/5] Shellvars: read /etc/firewalld/firewalld.conf
+
+Fixes https://fedorahosted.org/augeas/ticket/363
+
+(cherry picked from commit 63e322699272dd26fc9014c672ea5ce9e4fb21e8)
+---
+ lenses/shellvars.aug | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lenses/shellvars.aug b/lenses/shellvars.aug
+index da19379..4111ee6 100644
+--- a/lenses/shellvars.aug
++++ b/lenses/shellvars.aug
+@@ -205,6 +205,7 @@ module Shellvars =
+   let filter_misc    = incl "/etc/arno-iptables-firewall/debconf.cfg"
+                      . incl "/etc/cron-apt/config"
+                      . incl "/etc/environment"
++                     . incl "/etc/firewalld/firewalld.conf"
+                      . incl "/etc/blkid.conf"
+                      . incl "/etc/adduser.conf"
+                      . incl "/etc/cowpoke.conf"
+-- 
+1.8.5.3
+
