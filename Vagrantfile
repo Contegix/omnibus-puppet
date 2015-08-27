@@ -47,8 +47,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define 'ubuntu-14.04_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "ubuntu-14.04_64"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/ubuntu-14.04/versions/1/providers/virtualbox.box" 
+    c.vm.box = "chef/ubuntu-14.04"
   end
 
   config.vm.define 'ubuntu-12.04_64' do |c|
@@ -99,6 +98,7 @@ Vagrant.configure("2") do |config|
 
   # prepare VM to be an Omnibus builder
   config.vm.provision :chef_solo do |chef|
+    chef.version = "12.3.0"
     chef.json = {
       "omnibus" => {
         "build_user" => "vagrant",
@@ -115,7 +115,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :inline => <<-OMNIBUS_BUILD
     export PATH=/usr/local/bin:$PATH
     cd #{guest_project_path}
-    su vagrant -c "bundle install --binstubs"
-    su vagrant -c "bin/omnibus build #{project_name}"
+    su vagrant -c ". /home/vagrant/.bash_profile; bundle install --binstubs"
+    su vagrant -c ". /home/vagrant/.bash_profile; bin/omnibus build #{project_name}"
   OMNIBUS_BUILD
 end

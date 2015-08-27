@@ -4,4 +4,4 @@
 
 site :opscode
 
-cookbook "omnibus", "= 1.2.4"
+cookbook "omnibus", "= 2.4.6"
