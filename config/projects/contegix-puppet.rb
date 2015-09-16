@@ -6,7 +6,7 @@ replaces        "contegix-puppet"
 install_dir    "/opt/contegix/puppet"
 #build_version   Omnibus::BuildVersion.new.semver
 build_version   "3.6.2"
-build_iteration 2
+build_iteration 3
 
 # creates required build directories
 dependency "preparation"

@@ -15,52 +15,41 @@ Vagrant.configure("2") do |config|
 
   config.vm.hostname = "#{project_name}.build.contegix.com"
 
-  config.vm.define 'centos-5.10_64' do |c|
+  config.vm.define 'centos-5.11_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "centos-5.10_64"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-5.10/versions/1/providers/virtualbox.box" 
+    c.vm.box = "bento/centos-5.11"
   end
 
-  config.vm.define 'centos-5.10_32' do |c|
+  config.vm.define 'centos-5.11_32' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "centos-5.10_32"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-5.10-i386/versions/1/providers/virtualbox.box" 
+    c.vm.box = "bento/centos-5.11-i386"
   end
 
-  config.vm.define 'centos-6.5_64' do |c|
+  config.vm.define 'centos-6.7_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "centos-6.5_64"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-6.5/versions/1/providers/virtualbox.box" 
+    c.vm.box = "bento/centos-6.7"
   end
 
-  config.vm.define 'centos-6.5_32' do |c|
+  config.vm.define 'centos-6.7_32' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "centos-6.5_32"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-6.5-i386/versions/1/providers/virtualbox.box" 
+    c.vm.box = "bento/centos-6.7-i386"
   end
 
-  config.vm.define 'centos-7.0_64' do |c|
+  config.vm.define 'centos-7.1_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "centos-7.0_64"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/centos-7.0/versions/1/providers/virtualbox.box" 
+    c.vm.box = "bento/centos-7.1"
   end
 
   config.vm.define 'ubuntu-14.04_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "chef/ubuntu-14.04"
+    c.vm.box = "bento/ubuntu-14.04"
   end
 
-  config.vm.define 'ubuntu-12.04_64' do |c|
+  config.vm.define 'debian-6.10_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "ubuntu-12.04_64"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/ubuntu-12.04/versions/1/providers/virtualbox.box" 
+    c.vm.box = "bento/debian-6.0.10"
   end
 
-  config.vm.define 'debian-7.6_64' do |c|
-    c.berkshelf.berksfile_path = "./Berksfile"
-    c.vm.box = "debian-7.6_64"
-    c.vm.box_url = "https://vagrantcloud.com/chef/boxes/debian-7.6/versions/1/providers/virtualbox.box" 
-  end
 
   config.vm.provider :virtualbox do |vb|
     # Give enough horsepower to build without taking all day.
