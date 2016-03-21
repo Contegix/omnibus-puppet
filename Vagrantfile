@@ -45,7 +45,7 @@ Vagrant.configure("2") do |config|
     c.vm.box = "bento/ubuntu-14.04"
   end
 
-  config.vm.define 'debian-6.10_64' do |c|
+  config.vm.define 'debian-6.0_64' do |c|
     c.berkshelf.berksfile_path = "./Berksfile"
     c.vm.box = "bento/debian-6.0.10"
   end
